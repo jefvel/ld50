@@ -1,5 +1,6 @@
 package entities;
 
+import h2d.Bitmap;
 import elke.graphics.Animation;
 
 class Guy extends Actor {
@@ -7,6 +8,12 @@ class Guy extends Actor {
 	var originX = 16;
 	var originY = 32;
 	var flipX = false;
+
+	public var pickupRadius = 20.;
+
+	public var maxFruit = 4;
+
+	public var heldFruit: Array<Fruit> = [];
 
 	public function new(?s) {
 		super(s);
@@ -21,6 +28,18 @@ class Guy extends Actor {
 			var tile = s.atlas.addNamedTile(sprite.tileSheet.tile, tName);
 			sprite.tileSheet.tile = tile;
 		}
+	}
+
+	public function pickupFruit(fruit: Fruit) {
+		if (heldFruit.length >= maxFruit) {
+			return;
+		}
+
+		if (fruit.held) {
+			return;
+		}
+		fruit.held = true;
+		heldFruit.push(fruit);
 	}
 
 	var lastFrame = -1;
@@ -38,9 +57,40 @@ class Guy extends Actor {
 		}
 	}
 
+	var toThrow: Fruit = null;
+	public function startAim() {
+		if (heldFruit.length == 0) {
+			return false;
+		}
+
+		toThrow = heldFruit[0];
+
+		return true;
+	}
+
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
+
+		var p = sprite.getSlice("leftArm");
+		var rightArm = sprite.getSlice("rightArm");
+
+		if (p != null) {
+			var px = x + p.x - originX;
+			if (flipX) {
+				px = x + sprite.tileSheet.width - originX - p.x - 2;
+			}
+			var py = -originY + p.y;
+
+			var spaceY = 0.;
+			for (f in heldFruit) {
+				f.x = px;
+				f.y = y - 0.2 - spaceY * 0.01;
+				f.z = (py + spaceY) + 2;
+				f.vz = 0.;
+				spaceY -= 4;
+			}
+		}
 
 		if (vx * vx + vy * vy > 1) {
 			sprite.play("walk");

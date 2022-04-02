@@ -25,9 +25,9 @@ class Actor extends WorldObject {
 		vx *= friction;
 		vy *= friction;
 
-		vz -= .9;
+		vz += .9;
 		z += vz;
-		if (z < 0) {
+		if (z > 0) {
 			z = 0;
 			vz *= -0.5;
 		}

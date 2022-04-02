@@ -21,7 +21,7 @@ class WorldObject {
 
 	public function draw() {
 		if (tile != null) {
-			state.actorGroup.add(Math.round(x), Math.round(y - z), tile);
+			state.actorGroup.add(Math.round(x), Math.round(y + z), tile);
 		}
 	}
 }

@@ -66,6 +66,7 @@
    { "name": "walk", "from": 2, "to": 5, "direction": "forward", "color": "#000000ff" }
   ],
   "slices": [
+   { "name": "leftArm", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 27, "y": 17, "w": 2, "h": 2 } }, { "frame": 1, "bounds": {"x": 27, "y": 17, "w": 2, "h": 2 } }, { "frame": 2, "bounds": {"x": 27, "y": 17, "w": 2, "h": 2 } }, { "frame": 3, "bounds": {"x": 27, "y": 17, "w": 2, "h": 2 } }, { "frame": 4, "bounds": {"x": 27, "y": 16, "w": 2, "h": 2 } }, { "frame": 5, "bounds": {"x": 27, "y": 18, "w": 2, "h": 2 } }] }
   ]
  }
 }

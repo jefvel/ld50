@@ -1,5 +1,7 @@
 package gamestates;
 
+import entities.ThrowLine;
+import entities.VolcanoCam;
 import entities.Fruit;
 import entities.Guy;
 import h2d.Tile;
@@ -30,11 +32,15 @@ class PlayState extends elke.gamestate.GameState {
 	public var objects: Array<WorldObject> = [];
 	public var fruits: Array<Fruit> = [];
 
+	public var cam: VolcanoCam;
+
 	public var input: BasicInput;
 
 	public var guy: Guy;
 
 	public var level: LevelData.LevelData_Level;
+
+	public var throwLine: ThrowLine;
 
 	public function new() {}
 
@@ -77,10 +83,15 @@ class PlayState extends elke.gamestate.GameState {
 		guy.y = level.pxHei * 0.5 + 64;
 		addActor(guy);
 
+		cam = new VolcanoCam(uiContainer);
+		cam.x = cam.y = 8;
+
 		var frkinds = Data.fruits.all.toArrayCopy();
-		for (i in 0...100) {
+		for (_ in 0...100) {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
+
+		throwLine = new ThrowLine(foreground);
 	}
 
 	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
@@ -141,7 +152,7 @@ class PlayState extends elke.gamestate.GameState {
 		guy.vx += vx;
 		guy.vy += vy;
 
-		objects.sort((a, b) -> Std.int(a.y - b.y));
+		objects.sort((a, b) -> (a.y - b.y < 0) ? -1 : 1);
 
 		for (a in objects) {
 			a.tick(dt);
@@ -152,6 +163,34 @@ class PlayState extends elke.gamestate.GameState {
 			a.y = Math.min(level.pxHei - 8, a.y);
 		}
 
+		var rSq = guy.pickupRadius * guy.pickupRadius;
+		for (f in fruits) {
+			if (f.held) continue;
+
+			var dx = guy.x - f.x;
+			var dy = guy.y - f.y;
+			if (dx * dx + dy * dy < rSq) {
+				guy.pickupFruit(f);
+			}
+		}
+
+	}
+
+	override function onRender(e:Engine) {
+		super.onRender(e);
+
+		shadowGroup.clear();
+		for (a in actors) {
+			var alpha = Math.max(0, 0.4 + (a.z / 30) / 0.4);
+			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadowTile);
+		}
+
+		actorGroup.clear();
+		for (a in objects) {
+			a.draw();
+		}
+
+		positionWorld();
 	}
 
 	function positionWorld(){
@@ -179,22 +218,6 @@ class PlayState extends elke.gamestate.GameState {
 		world.y = Math.round(world.y);
 	}
 
-	override function onRender(e:Engine) {
-		super.onRender(e);
-
-		shadowGroup.clear();
-		for (a in actors) {
-			var alpha = Math.max(0, 0.4 - a.z / 30);
-			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadowTile);
-		}
-
-		actorGroup.clear();
-		for (a in objects) {
-			a.draw();
-		}
-
-		positionWorld();
-	}
 
 	override function onLeave() {
 		super.onLeave();
