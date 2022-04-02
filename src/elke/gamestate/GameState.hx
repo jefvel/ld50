@@ -2,7 +2,7 @@ package elke.gamestate;
 
 class GameState {
 	@:allow(elke.gamestate.GameStateHandler)
-	var game:elke.Game;
+	public var game:elke.Game;
 
 	public var name:String;
 

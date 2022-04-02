@@ -6,24 +6,24 @@
 -D windowTitle=Game
 -D windowSize=1280x720
 # Sets the default color of the scene + html background
--D backgroundColor=#202030
+-D backgroundColor=#150a1f
 
 # Uncomment if you want a static sized window size
 #-D windowFixed
 
 ## Saves
 # Change this to a unique identifier for your game
--D saveNamespace=game-base
+-D saveNamespace=jefvel.ld50
 
 -D enableGamepads
 
 ## HTML/Js Specific values
 # Twitter card
--D twitterSite=https://yourwebsite.com
--D twitterCreator=@yourusername
+-D twitterSite=https://jefvel.net
+-D twitterCreator=@jefvel
 # OpenGraph
--D ogUrl=https://yourwebsite.com
--D ogDescription=Your game Description
+-D ogUrl=https://jefvel.net
+-D ogDescription=jefvel - LD50
 -D ogImage=https://link.to.your.img/photo.png
 
 ## Newgrounds stuff
