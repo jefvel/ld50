@@ -1,5 +1,7 @@
 package gamestates;
 
+import entities.Catapult;
+import hxd.Key;
 import entities.ThrowLine;
 import entities.VolcanoCam;
 import entities.Fruit;
@@ -37,10 +39,9 @@ class PlayState extends elke.gamestate.GameState {
 	public var input: BasicInput;
 
 	public var guy: Guy;
+	public var catapult: Catapult;
 
 	public var level: LevelData.LevelData_Level;
-
-	public var throwLine: ThrowLine;
 
 	public function new() {}
 
@@ -83,6 +84,11 @@ class PlayState extends elke.gamestate.GameState {
 		guy.y = level.pxHei * 0.5 + 64;
 		addActor(guy);
 
+		catapult = new Catapult(this);
+		catapult.x = level.pxWid * 0.5;
+		catapult.y = level.pxHei * 0.5;
+		addActor(catapult);
+
 		cam = new VolcanoCam(uiContainer);
 		cam.x = cam.y = 8;
 
@@ -91,7 +97,6 @@ class PlayState extends elke.gamestate.GameState {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
 
-		throwLine = new ThrowLine(foreground);
 	}
 
 	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
@@ -125,6 +130,21 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	override function onEvent(e:Event) {
+		if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
+			startAim();
+		}
+
+		if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
+			finishAim();
+		}
+	}
+
+	function startAim() {
+		guy.startAim();
+	}
+
+	function finishAim() {
+		guy.throwFruit();
 	}
 
 	var time = 0.0;
@@ -157,10 +177,12 @@ class PlayState extends elke.gamestate.GameState {
 		for (a in objects) {
 			a.tick(dt);
 
-			a.x = Math.max(16, a.x);
-			a.y = Math.max(80, a.y);
-			a.x = Math.min(level.pxWid - 16, a.x);
-			a.y = Math.min(level.pxHei - 8, a.y);
+			if (a.keepInBounds) {
+				a.x = Math.max(16, a.x);
+				a.y = Math.max(80, a.y);
+				a.x = Math.min(level.pxWid - 16, a.x);
+				a.y = Math.min(level.pxHei - 8, a.y);
+			}
 		}
 
 		var rSq = guy.pickupRadius * guy.pickupRadius;
@@ -181,7 +203,8 @@ class PlayState extends elke.gamestate.GameState {
 
 		shadowGroup.clear();
 		for (a in actors) {
-			var alpha = Math.max(0, 0.4 + (a.z / 30) / 0.4);
+			if (a.hideShadow) continue;
+			var alpha = Math.max(0, 0.4 + (a.z / 64) / 0.4);
 			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadowTile);
 		}
 

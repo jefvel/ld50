@@ -1,5 +1,6 @@
 package entities;
 
+import elke.T;
 import h2d.Bitmap;
 import elke.graphics.Animation;
 
@@ -15,6 +16,8 @@ class Guy extends Actor {
 
 	public var heldFruit: Array<Fruit> = [];
 
+	public var throwLine: ThrowLine;
+
 	public function new(?s) {
 		super(s);
 
@@ -28,18 +31,8 @@ class Guy extends Actor {
 			var tile = s.atlas.addNamedTile(sprite.tileSheet.tile, tName);
 			sprite.tileSheet.tile = tile;
 		}
-	}
 
-	public function pickupFruit(fruit: Fruit) {
-		if (heldFruit.length >= maxFruit) {
-			return;
-		}
-
-		if (fruit.held) {
-			return;
-		}
-		fruit.held = true;
-		heldFruit.push(fruit);
+		throwLine = new ThrowLine(state.foreground);
 	}
 
 	var lastFrame = -1;
@@ -57,45 +50,106 @@ class Guy extends Actor {
 		}
 	}
 
+	public function pickupFruit(fruit: Fruit) {
+		if (heldFruit.length >= maxFruit) {
+			return;
+		}
+
+		if (fruit.held || fruit.thrown) {
+			return;
+		}
+
+		fruit.held = true;
+		heldFruit.push(fruit);
+		state.game.sound.playWobble(hxd.Res.sound.pickup, 0.3);
+	}
+
 	var toThrow: Fruit = null;
+	var aiming = false;
+	var throwing = false;
 	public function startAim() {
 		if (heldFruit.length == 0) {
 			return false;
 		}
 
 		toThrow = heldFruit[0];
+		aiming = true;
+
+		throwLine.active = true;
+
+		state.game.sound.playWobble(hxd.Res.sound.preparethrow, 0.3);
 
 		return true;
+	}
+
+	public function throwFruit() {
+		if (!aiming) {
+			return;
+		}
+
+		toThrow.held = false;
+		toThrow.thrown = true;
+
+		heldFruit.remove(toThrow);
+		toThrow.vz = -4;
+		
+		var power = 45.;
+		var interpThrow = T.quintIn(throwLine.throwPower);
+
+		toThrow.vx = throwLine.throwX * interpThrow * power;
+		toThrow.vy = throwLine.throwY * interpThrow * power;
+
+		state.game.sound.playWobble(hxd.Res.sound._throw, 0.3);
+
+		toThrow = null;
+		aiming = false;
+		throwing = true;
+		sprite.play("throw", false, true, 0, finishThrow);
+
+		throwLine.active = false;
+	}
+
+	function finishThrow(_) {
+		throwing = false;
 	}
 
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
 
-		var p = sprite.getSlice("leftArm");
+		var leftArm = sprite.getSlice("leftArm");
 		var rightArm = sprite.getSlice("rightArm");
 
-		if (p != null) {
+		var spaceY = 0.;
+
+		moveSpeedMultiplier = (aiming || throwing) ? 0.2 : 1;
+
+		for (f in heldFruit) {
+			var p = f == toThrow ? rightArm : leftArm;
+
 			var px = x + p.x - originX;
 			if (flipX) {
 				px = x + sprite.tileSheet.width - originX - p.x - 2;
 			}
 			var py = -originY + p.y;
 
-			var spaceY = 0.;
-			for (f in heldFruit) {
-				f.x = px;
-				f.y = y - 0.2 - spaceY * 0.01;
-				f.z = (py + spaceY) + 2;
-				f.vz = 0.;
+			f.x = px;
+			f.y = y - 0.2 - spaceY * 0.01;
+			f.z += ((py + spaceY) + 2 - f.z) * 0.5;
+			f.vz = 0.;
+
+			if (f != toThrow) {
 				spaceY -= 4;
 			}
 		}
 
-		if (vx * vx + vy * vy > 1) {
-			sprite.play("walk");
-		} else {
-			sprite.play("idle");
+
+		if (!throwing) {
+			if (vx * vx + vy * vy > 1) {
+				sprite.play("walk");
+			} else {
+				sprite.play("idle");
+			}
 		}
 
 		if (sprite.currentFrame != lastFrame) {
@@ -103,9 +157,14 @@ class Guy extends Actor {
 			lastFrame = sprite.currentFrame;
 		}
 
-		if (vx < -0.4) {
+		var lookX = vx;
+		if (aiming || throwing) {
+			lookX = throwLine.throwX;
+		}
+
+		if (lookX < -0.1) {
 			flipX = true;
-		} else if (vx > 0.4) {
+		} else if (lookX > 0.1) {
 			flipX = false;
 		}
 	}
@@ -115,6 +174,11 @@ class Guy extends Actor {
 		var bx = Math.round(x - (flipX ? -originX : originX));
 		var by = Math.round(y - originY);
 		var sx = flipX ? -1 : 1;
+
+		if (toThrow != null) {
+			throwLine.x = Math.round(toThrow.x);
+			throwLine.y = Math.round(toThrow.y + toThrow.z - 8);
+		}
 
 		state.actorGroup.addTransform(bx, by, sx, 1, 0, t);
 	}

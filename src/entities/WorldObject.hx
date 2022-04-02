@@ -8,6 +8,8 @@ class WorldObject {
 	public var y = 0.;
 	public var z = 0.;
 
+	public var keepInBounds = true;
+
 	public var dead = false;
 
 	public var tile: Tile = null;
