@@ -73,6 +73,11 @@ class TextureAtlas {
 		return namedTiles[name];
 	}
 
+	public function addTile(tile: Tile) {
+		var t = addObject(new Bitmap(tile));
+		return t;
+	}
+
 	public function addNamedTile(tile:Tile, name){
 		if (namedTiles.exists(name)) {
 			return namedTiles[name];

@@ -3,6 +3,7 @@ package entities;
 class Actor extends WorldObject {
 	public var vx = 0.;
 	public var vy = 0.;
+	public var vz = 0.;
 	public var friction = 0.9;
 	public var moveSpeed = 0.5;
 	public var maxSpeed = 20.0;
@@ -23,5 +24,12 @@ class Actor extends WorldObject {
 		y += vy;
 		vx *= friction;
 		vy *= friction;
+
+		vz -= .9;
+		z += vz;
+		if (z < 0) {
+			z = 0;
+			vz *= -0.5;
+		}
 	}
 }
