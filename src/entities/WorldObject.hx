@@ -11,6 +11,7 @@ class WorldObject {
 	public var rotation: Float = 0.;
 
 	public var keepInBounds = true;
+	public var edgePadding = 0.;
 
 	public var dead = false;
 
@@ -19,9 +20,13 @@ class WorldObject {
 	var state: PlayState;
 	public function new(state: PlayState) {
 		this.state = state;
+		onAdd();
 	}
 
 	public function tick(dt: Float) {}
+
+	public function onRemove(){}
+	public function onAdd() {}
 
 	public function draw() {
 		if (tile != null) {

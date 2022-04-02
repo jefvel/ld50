@@ -15,6 +15,9 @@ class Fruit extends Actor {
 
 		uncollidable = true;
 		catapultable = true;
+		type = Fruit;
+
+		volcanoValue = data.Power;
 	}
 
 	public override function tick(dt:Float) {
@@ -35,13 +38,18 @@ class Fruit extends Actor {
 			groundFriction = 1.0;
 			keepInBounds = true;
 			if (x < 0 || y < 0 || x > state.level.pxWid || y > state.level.pxHei) {
-				remove();
+				onRemove();
 			}
 		}
 	}
 
-	function remove() {
-		state.removeActor(this);
+	public override function onAdd() {
+		super.onAdd();
+		state.fruits.push(this);
+	}
+
+	public override function onRemove() {
+		super.onRemove();
 		state.removeFruit(this);
 	}
 }

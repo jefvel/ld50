@@ -16,7 +16,7 @@ class Guy extends Actor {
 
 	public var maxFruit = 4;
 
-	public var heldFruit: Array<Fruit> = [];
+	public var heldFruit: Array<Actor> = [];
 
 	public var throwLine: ThrowLine;
 
@@ -37,6 +37,7 @@ class Guy extends Actor {
 		}
 
 		throwLine = new ThrowLine(state.foreground);
+		type = Man;
 	}
 
 	var lastFrame = -1;
@@ -54,7 +55,7 @@ class Guy extends Actor {
 		}
 	}
 
-	public function pickupFruit(fruit: Fruit) {
+	public function pickupFruit(fruit: Actor) {
 		if (heldFruit.length >= maxFruit) {
 			return;
 		}
@@ -65,10 +66,11 @@ class Guy extends Actor {
 
 		fruit.held = true;
 		heldFruit.push(fruit);
+		fruit.onPickup();
 		state.game.sound.playWobble(hxd.Res.sound.pickup, 0.3);
 	}
 
-	var toThrow: Fruit = null;
+	var toThrow: Actor = null;
 	var aiming = false;
 	var throwing = false;
 	public function startAim() {
@@ -100,6 +102,8 @@ class Guy extends Actor {
 
 		heldFruit.remove(toThrow);
 		toThrow.vz = -4;
+
+		toThrow.onThrown();
 		
 		var power = 45.;
 		var interpThrow = T.quintIn(throwLine.throwPower);

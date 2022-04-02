@@ -51,6 +51,7 @@ class Catapult extends Actor {
 	public function putIntoCatapult(a: Actor) {
 		if (a.held || a.thrown) return;
 		if (!a.catapultable) return;
+		a.uncollidable = true;
 		a.held = true;
 		toCatapult.push(a);
 	}
@@ -58,15 +59,25 @@ class Catapult extends Actor {
 	var lastFrame = -1;
 	function enterFrame(index: Int) {
 		if (index == 3) {
+			var threwBaddie = false;
 			for (f in toCatapult) {
 				f.vy = -20 - Math.random() * 20;
 				f.vz = -11 - Math.random() * 10;
 				f.vx = (Math.random() - 0.5) * 4; 
 				f.thrown = true;
+				f.keepInBounds = false;
+				f.maxSpeed = 35.;
+				f.catapulted = true;
+				if (f.type == Baddie) {
+					threwBaddie = true;
+				}
 			}
 
 			if (toCatapult.length > 0) {
 				state.game.sound.playWobble(hxd.Res.sound.fruitfly, 0.2);
+				if (threwBaddie) {
+					state.game.sound.playWobble(hxd.Res.sound.baddiefling, 0.2);
+				}
 			}
 
 			toCatapult.splice(0, toCatapult.length);
@@ -109,7 +120,8 @@ class Catapult extends Actor {
 		if (!firing) {
 			for (a in state.actors) {
 				if (a == this) continue;
-				if (a.held || a.thrown) continue;
+				if (a.held) continue;
+				if (Math.abs(a.z) > 1) continue;
 				if (!a.catapultable) continue;
 
 				var dx = a.x - x;
@@ -124,7 +136,6 @@ class Catapult extends Actor {
 			enterFrame(sprite.currentFrame);
 			lastFrame = sprite.currentFrame;
 		}
-
 	}
 
 	override function draw() {

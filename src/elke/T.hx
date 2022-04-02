@@ -50,6 +50,10 @@ class T {
 		return from + d * s;
 	}
 
+	public static inline function mix(a: Float, b: Float, x: Float) {
+		return (1-x)*a + x*b;
+	}
+
 	public static inline function clamp(x:Float, lower, upper) {
 		if (x < lower)
 			return lower;

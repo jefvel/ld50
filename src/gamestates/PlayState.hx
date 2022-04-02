@@ -1,5 +1,9 @@
 package gamestates;
 
+import elke.T;
+import h3d.Matrix;
+import elke.utils.EasedFloat;
+import entities.Baddie;
 import elke.utils.CollisionHandler;
 import entities.Tree;
 import entities.Catapult;
@@ -27,6 +31,7 @@ class PlayState extends elke.gamestate.GameState {
 	public var atlas: TextureAtlas;
 	var shadowTile: Tile;
 	var treeShadowTile: Tile;
+	public var baddieShadowTile: Tile;
 	var fruitTile: Tile;
 	var shadowGroup: TileGroup;
 	public var actorGroup: TileGroup;
@@ -34,6 +39,7 @@ class PlayState extends elke.gamestate.GameState {
 	public var actors: Array<Actor> = [];
 	public var objects: Array<WorldObject> = [];
 	public var fruits: Array<Fruit> = [];
+	public var baddies: Array<Baddie> = [];
 
 	public var cam: VolcanoCam;
 
@@ -45,6 +51,13 @@ class PlayState extends elke.gamestate.GameState {
 	public var level: LevelData.LevelData_Level;
 
 	var collisions: CollisionHandler;
+
+	public var baddieSpawnInterval = 20.0;
+	public var wave = 0;
+	public var spawnIn = 1.0;
+
+	var criticalFade = new EasedFloat(0, 2.5);
+	var isCritical = false;
 
 	public function new() {}
 
@@ -63,6 +76,10 @@ class PlayState extends elke.gamestate.GameState {
 		treeShadowTile.dx = -29;
 		treeShadowTile.dy = -17;
 
+		baddieShadowTile = bigShadow.sub(0, 80, 64, 16);
+		baddieShadowTile.dx = -30;
+		baddieShadowTile.dy = -8;
+
 		fruitTile = atlas.addTile(hxd.Res.img.fruits.toTile());
 
 		world = new Object(container);
@@ -71,14 +88,18 @@ class PlayState extends elke.gamestate.GameState {
 		actorGroup = new TileGroup(atlas.atlasTile, world);
 		foreground = new Object(world);
 
+		game.s2d.filter = null;
+
 		uiContainer = new Object(container);
 		input = new BasicInput(game, container);
 
-		world.filter = new h2d.filter.Nothing();
+		world.filter = new h2d.filter.ColorMatrix(colorMatrix);
 		world.filter.useScreenResolution = false;
 
 		startGame();
 	}
+
+	var colorMatrix = Matrix.I();
 
 	public function startGame() {
 		var w = new LevelData();
@@ -92,14 +113,14 @@ class PlayState extends elke.gamestate.GameState {
 		guy = new Guy(this);
 		guy.x = level.pxWid * 0.5;
 		guy.y = level.pxHei * 0.5 + 64;
-		addActor(guy);
+		//addActor(guy);
 
 		catapult = new Catapult(this);
 		catapult.x = level.pxWid * 0.5;
 		catapult.y = level.pxHei * 0.5;
-		addActor(catapult);
+		//addActor(catapult);
 
-		cam = new VolcanoCam(uiContainer);
+		cam = new VolcanoCam(uiContainer, this);
 		cam.x = cam.y = 8;
 
 		for (t in level.l_Entities.all_Tree) {
@@ -107,7 +128,7 @@ class PlayState extends elke.gamestate.GameState {
 			tree.customShadow = treeShadowTile;
 			tree.x = t.pixelX;
 			tree.y = t.pixelY;
-			addActor(tree);
+			//addActor(tree);
 		}
 
 		var frkinds = Data.fruits.all.toArrayCopy();
@@ -132,8 +153,31 @@ class PlayState extends elke.gamestate.GameState {
 		var fruit = new Fruit(tile, kind, this);
 		fruit.x = x;
 		fruit.y = y;
-		fruits.push(fruit);
-		addActor(fruit);
+		//fruits.push(fruit);
+		//addActor(fruit);
+	}
+
+	function spawnWave() {
+		spawnIn = baddieSpawnInterval;
+
+		var spawnCount = 1;
+		for (_ in 0...spawnCount) {
+			var onLeft = Math.random() > 0.5;
+			var b = new Baddie(this);
+			b.x = level.pxWid;
+			if (onLeft) {
+				b.x = 0;
+			}
+
+			b.y = Math.random() * level.pxHei;
+		}
+	}
+
+	public function checkWave(dt: Float) {
+		spawnIn -= dt;
+		if (spawnIn < 0) {
+			spawnWave();
+		}
 	}
 
 	public function addActor(a: Actor) {
@@ -170,6 +214,7 @@ class PlayState extends elke.gamestate.GameState {
 		if (game.paused) return;
 
 		time += dt;
+		checkWave(dt);
 
 		var vx = 0.;
 		var vy = 0.;
@@ -193,30 +238,98 @@ class PlayState extends elke.gamestate.GameState {
 
 		objects.sort((a, b) -> (a.y - b.y < 0) ? -1 : 1);
 
+		// Check for catapulted objects
+		var index = actors.length - 1;
+		for (_ in 0...actors.length) {
+			if (index < 0) {
+				break;
+			}
+
+			var a = actors[index];
+			if (a.catapulted) {
+				if (a.y < -30) {
+					a.onRemove();
+					cam.feed(a);
+					index --;
+				}
+			}
+			index --;
+		}
+
 		for (a in objects) {
 			a.tick(dt);
 
 			if (a.keepInBounds) {
-				a.x = Math.max(16, a.x);
-				a.y = Math.max(80, a.y);
-				a.x = Math.min(level.pxWid - 16, a.x);
-				a.y = Math.min(level.pxHei - 8, a.y);
+				a.x = Math.max(16 + a.edgePadding, a.x);
+				a.y = Math.max(80 + a.edgePadding, a.y);
+				a.x = Math.min(level.pxWid - 16 - a.edgePadding, a.x);
+				a.y = Math.min(level.pxHei - 8 - a.edgePadding, a.y);
 			}
 		}
 
-		var rSq = guy.pickupRadius * guy.pickupRadius;
-		for (f in fruits) {
+		var hitWithFruit = false;
+		for (f in actors) {
+			if (f == guy) continue;
 			if (f.held) continue;
+			if (!f.catapultable) continue;
+
+			var r = guy.pickupRadius + f.radius;
+			var rSq = r * r;
 
 			var dx = guy.x - f.x;
 			var dy = guy.y - f.y;
 			if (dx * dx + dy * dy < rSq) {
 				guy.pickupFruit(f);
 			}
+
+			if (f.type == Fruit) {
+				if (f.thrown && !f.catapulted) {
+					var fmax = f.maxSpeed * 0.5;
+					if (f.vx * f.vx + f.vy * f.vy < fmax * fmax) continue;
+
+					for (b in baddies) {
+						if (b.held || b.catapulted) continue;
+
+						var dx = b.x - f.x;
+						var dy = b.y - f.y;
+						var lsq = dx * dx + dy * dy;
+						var r = f.radius + b.radius;
+						if (lsq < r * r) {
+							var l = Math.sqrt(lsq);
+							dx /= l;
+							dy /= l;
+
+							b.vx += f.vx * 1;
+							b.vy += f.vy * 1;
+
+							f.vx *= -0.2;
+							f.vy *= -0.2;
+							f.x -= dx * 2;
+							f.y -= dy * 2;
+							hitWithFruit = true;
+						}
+					}
+				}
+			}
 		}
+
+		if (hitWithFruit) {
+			game.sound.playWobble(hxd.Res.sound.fruithit);
+		}
+
 
 		var o: Array<CollisionObject> = cast actors;
 		collisions.resolve(o);
+
+		if (!isCritical) {
+			if (cam.isCritical) {
+				isCritical = true;
+				criticalFade.value = 1.0;
+			}
+		} else if (!cam.isCritical) {
+			criticalFade.value = 0.;
+			isCritical = false;
+		}
 	}
 
 	public function removeFruit(f) {
@@ -263,8 +376,15 @@ class PlayState extends elke.gamestate.GameState {
 			world.y = Math.round((game.s2d.height - scaledHeight) * 0.5);
 		}
 
-		world.x = Math.round(world.x);
+		world.x = Math.round(world.x + Math.sin(time * 60) * criticalFade.value * 1);
 		world.y = Math.round(world.y);
+
+		colorMatrix.identity();
+		var v = criticalFade.value;
+		var r = T.mix(1, 0.52, v);
+		var g = T.mix(1, 0.54, v);
+		var b = T.mix(1, 0.8, v);
+		colorMatrix.scale(r, g, b);
 	}
 
 

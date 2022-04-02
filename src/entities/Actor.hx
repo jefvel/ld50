@@ -2,6 +2,14 @@ package entities;
 
 import h2d.Tile;
 
+enum ActorType {
+	Fruit;
+	Baddie;
+	Man;
+	Unspecified;
+	Tree;
+}
+
 class Actor extends WorldObject {
 	public var vx = 0.;
 	public var vy = 0.;
@@ -12,6 +20,12 @@ class Actor extends WorldObject {
 	public var maxSpeed = 20.0;
 	public var gravity = 0.5;
 	public var bounciness = 0.3;
+	
+	public var volcanoValue = 1.;
+
+	public var type : ActorType = Unspecified;
+
+	public var catapulted = false;
 
 	public var held = false;
 	public var thrown = false;
@@ -24,10 +38,13 @@ class Actor extends WorldObject {
 	
 	public var catapultable = false;
 
-	var radius: Float = 8.;
+	public var radius: Float = 8.;
 	var mass: Float = 1.;
-	var uncollidable: Bool = false;
+	public var uncollidable: Bool = false;
 	var filterGroup: Int = 0;
+
+	public function onPickup() {}
+	public function onThrown() {}
 
 	override function tick(dt:Float) {
 		super.tick(dt);
@@ -57,5 +74,26 @@ class Actor extends WorldObject {
 				vy *= groundFriction;
 			}
 		}
+	}
+
+	public var life = 3.0;
+	public function hurt(damage: Float) {
+		life -= damage;
+		life = Math.max(0, life);
+		if (life <= 0) {
+			kill();
+		}
+	}
+
+	public function kill() {}
+
+	override function onAdd() {
+		super.onAdd();
+		state.addActor(this);
+	}
+
+	override function onRemove() {
+		super.onRemove();
+		state.removeActor(this);
 	}
 }
