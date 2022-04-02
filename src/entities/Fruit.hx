@@ -4,8 +4,6 @@ import h2d.Tile;
 
 class Fruit extends Actor {
 	public var cdb: Data.Fruits = null;
-	public var held = false;
-	public var thrown = false;
 
 	public function new(tile: Tile, data: Data.Fruits, s) {
 		super(s);
@@ -16,6 +14,7 @@ class Fruit extends Actor {
 		bounciness = 0.5;
 
 		uncollidable = true;
+		catapultable = true;
 	}
 
 	public override function tick(dt:Float) {
@@ -34,6 +33,15 @@ class Fruit extends Actor {
 		} else {
 			friction = 0.9;
 			groundFriction = 1.0;
+			keepInBounds = true;
+			if (x < 0 || y < 0 || x > state.level.pxWid || y > state.level.pxHei) {
+				remove();
+			}
 		}
+	}
+
+	function remove() {
+		state.removeActor(this);
+		state.removeFruit(this);
 	}
 }

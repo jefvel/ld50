@@ -10,19 +10,19 @@ class VolcanoCam extends Entity2D {
 	var frame: ScaleGrid;
 	var dot: Bitmap;
 	var cameraContent: Object;
-	var width = 90;
-	var height = 64;
+	var width = 128;
+	var height = 80;
 	var text: Text;
 	public function new(?s) {
 		super(s);
 		cameraContent = new Object(this);
 		frame = new ScaleGrid(hxd.Res.img.cameraframe.toTile(), 5, 5, 5, 5, this);
-		frame.width = 90 + 10;
-		frame.height = 64 + 10;
+		frame.width = width + 10;
+		frame.height = height + 10;
 		cameraContent.x = cameraContent.y = 5;
 
 		text = new Text(hxd.Res.fonts.marumonica.toFont(), cameraContent);
-		text.text = "REC";
+		text.text = "LIVE";
 		text.textColor = 0xb42313;
 		dot = new Bitmap(hxd.Res.img.camdot.toTile(), text);
 		dot.x = -6;

@@ -13,11 +13,16 @@ class Actor extends WorldObject {
 	public var gravity = 0.5;
 	public var bounciness = 0.3;
 
+	public var held = false;
+	public var thrown = false;
+
 	public var groundFriction = 0.9;
 
 	public var hideShadow = false;
 
 	public var customShadow: Tile = null;
+	
+	public var catapultable = false;
 
 	var radius: Float = 8.;
 	var mass: Float = 1.;
@@ -42,13 +47,15 @@ class Actor extends WorldObject {
 		vx *= friction;
 		vy *= friction;
 
-		vz += gravity;
-		z += vz;
-		if (z > 0) {
-			z = 0;
-			vz *= -bounciness;
-			vx *= groundFriction;
-			vy *= groundFriction;
+		if(!held) {
+			vz += gravity;
+			z += vz;
+			if (z > 0) {
+				z = 0;
+				vz *= -bounciness;
+				vx *= groundFriction;
+				vy *= groundFriction;
+			}
 		}
 	}
 }

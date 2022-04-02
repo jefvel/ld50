@@ -47,6 +47,54 @@ class Catapult extends Actor {
 		untilFire = 5.0;
 	}
 
+	var toCatapult: Array<Actor> = [];
+	public function putIntoCatapult(a: Actor) {
+		if (a.held || a.thrown) return;
+		if (!a.catapultable) return;
+		a.held = true;
+		toCatapult.push(a);
+	}
+
+	var lastFrame = -1;
+	function enterFrame(index: Int) {
+		if (index == 3) {
+			for (f in toCatapult) {
+				f.vy = -20 - Math.random() * 20;
+				f.vz = -11 - Math.random() * 10;
+				f.vx = (Math.random() - 0.5) * 4; 
+				f.thrown = true;
+			}
+
+			if (toCatapult.length > 0) {
+				state.game.sound.playWobble(hxd.Res.sound.fruitfly, 0.2);
+			}
+
+			toCatapult.splice(0, toCatapult.length);
+		}
+	}
+
+	function positionThingsInCatapult() {
+		var rightArm = sprite.getSlice("bowl");
+
+		var spaceY = 0.;
+
+		var ratio = firing ? 1 : 0.5;
+
+		for(f in toCatapult) {
+			var p = rightArm;
+
+			var px = x + p.x - sprite.originX;
+			var py = -sprite.originY + p.y;
+
+			f.x += (px - f.x) * ratio;
+			f.y += ((y + 0.2 - spaceY * 0.01) - f.y) * ratio;
+			f.z += ((py + spaceY) + 2 - f.z) * 0.5;
+			f.vz = 0.;
+
+			spaceY -= 4;
+		}
+	}
+
 	var untilFire = 1.0;
 	override function tick(dt:Float) {
 		super.tick(dt);
@@ -55,6 +103,28 @@ class Catapult extends Actor {
 		if (untilFire < 0) {
 			fire();
 		}
+
+		positionThingsInCatapult();
+
+		if (!firing) {
+			for (a in state.actors) {
+				if (a == this) continue;
+				if (a.held || a.thrown) continue;
+				if (!a.catapultable) continue;
+
+				var dx = a.x - x;
+				var dy = a.y - y;
+				if (dx * dx  + dy * dy < 64 * 64) {
+					putIntoCatapult(a);
+				}
+			}
+		}
+
+		if (sprite.currentFrame != lastFrame) {
+			enterFrame(sprite.currentFrame);
+			lastFrame = sprite.currentFrame;
+		}
+
 	}
 
 	override function draw() {

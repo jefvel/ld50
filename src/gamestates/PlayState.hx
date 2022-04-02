@@ -219,6 +219,10 @@ class PlayState extends elke.gamestate.GameState {
 		collisions.resolve(o);
 	}
 
+	public function removeFruit(f) {
+		fruits.remove(f);
+	}
+
 	override function onRender(e:Engine) {
 		super.onRender(e);
 
