@@ -189,7 +189,7 @@ class Guy extends Actor {
 		}
 
 		var r = 0.;
-		if (shaking) r = Math.sin(state.time * 180) * 0.05;
+		if (shaking) r = Math.sin(state.time * 120) * 0.05;
 
 		state.actorGroup.addTransform(bx, by, sx, 1, r, t);
 	}

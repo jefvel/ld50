@@ -211,8 +211,11 @@ class Animation {
 					currentFrame = to;
 					finished = true;
 					if (onFinish != null) {
+						var oldOnFinish = onFinish;
 						onFinish(currentAnimationName);
-						onFinish = null;
+						if (oldOnFinish == onFinish) {
+							onFinish = null;
+						}
 					}
 				}
 			}

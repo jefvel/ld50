@@ -1,8 +1,9 @@
 package gamestates;
 
+import elke.utils.CollisionHandler;
+import entities.Tree;
 import entities.Catapult;
 import hxd.Key;
-import entities.ThrowLine;
 import entities.VolcanoCam;
 import entities.Fruit;
 import entities.Guy;
@@ -13,7 +14,6 @@ import entities.Actor;
 import h2d.TileGroup;
 import elke.graphics.TextureAtlas;
 import h2d.Object;
-import elke.graphics.Transition;
 import hxd.Event;
 
 class PlayState extends elke.gamestate.GameState {
@@ -26,6 +26,7 @@ class PlayState extends elke.gamestate.GameState {
 
 	public var atlas: TextureAtlas;
 	var shadowTile: Tile;
+	var treeShadowTile: Tile;
 	var fruitTile: Tile;
 	var shadowGroup: TileGroup;
 	public var actorGroup: TileGroup;
@@ -43,6 +44,8 @@ class PlayState extends elke.gamestate.GameState {
 
 	public var level: LevelData.LevelData_Level;
 
+	var collisions: CollisionHandler;
+
 	public function new() {}
 
 	override function onEnter() {
@@ -51,15 +54,20 @@ class PlayState extends elke.gamestate.GameState {
 
 		atlas = new TextureAtlas();
 
-		shadowTile = hxd.Res.img.shadow.toTile();
+		var bigShadow = hxd.Res.img.shadow.toTile();
+		shadowTile = bigShadow.sub(0, 0, 16, 8);
 		shadowTile.dx = -8;
 		shadowTile.dy = -4;
+
+		treeShadowTile = bigShadow.sub(48, 16, 80, 32);
+		treeShadowTile.dx = -29;
+		treeShadowTile.dy = -17;
 
 		fruitTile = atlas.addTile(hxd.Res.img.fruits.toTile());
 
 		world = new Object(container);
 		background = new Object(world);
-		shadowGroup = new TileGroup(shadowTile, world);
+		shadowGroup = new TileGroup(bigShadow, world);
 		actorGroup = new TileGroup(atlas.atlasTile, world);
 		foreground = new Object(world);
 
@@ -75,6 +83,8 @@ class PlayState extends elke.gamestate.GameState {
 	public function startGame() {
 		var w = new LevelData();
 		level = w.all_levels.Level_0;
+
+		collisions = new CollisionHandler();
 
 		background.addChild(level.l_Background.render());
 		background.addChild(level.l_Background2.render());
@@ -92,11 +102,18 @@ class PlayState extends elke.gamestate.GameState {
 		cam = new VolcanoCam(uiContainer);
 		cam.x = cam.y = 8;
 
+		for (t in level.l_Entities.all_Tree) {
+			var tree = new Tree(this);
+			tree.customShadow = treeShadowTile;
+			tree.x = t.pixelX;
+			tree.y = t.pixelY;
+			addActor(tree);
+		}
+
 		var frkinds = Data.fruits.all.toArrayCopy();
 		for (_ in 0...100) {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
-
 	}
 
 	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
@@ -198,6 +215,8 @@ class PlayState extends elke.gamestate.GameState {
 			}
 		}
 
+		var o: Array<CollisionObject> = cast actors;
+		collisions.resolve(o);
 	}
 
 	override function onRender(e:Engine) {
@@ -207,7 +226,8 @@ class PlayState extends elke.gamestate.GameState {
 		for (a in actors) {
 			if (a.hideShadow) continue;
 			var alpha = Math.max(0, 0.4 + (a.z / 64) / 0.4);
-			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadowTile);
+			var shadow = a.customShadow != null ? a.customShadow : shadowTile;
+			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadow);
 		}
 
 		actorGroup.clear();

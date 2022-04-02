@@ -22,6 +22,9 @@ class Catapult extends Actor {
 		sprite.play("idle");
 
 		hideShadow = true;
+
+		mass = 0;
+		radius = 32;
 	}
 
 	public function fire() {
@@ -35,6 +38,10 @@ class Catapult extends Actor {
 	}
 
 	function finishFiring(_) {
+		sprite.play("recover", false, true, 0, onRecover);
+	}
+
+	function onRecover(_) {
 		firing = false;
 		sprite.play("idle");
 		untilFire = 5.0;

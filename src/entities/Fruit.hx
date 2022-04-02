@@ -14,6 +14,8 @@ class Fruit extends Actor {
 		z = -(40 + Math.random() * 32);
 		maxSpeed = 30.;
 		bounciness = 0.5;
+
+		uncollidable = true;
 	}
 
 	public override function tick(dt:Float) {

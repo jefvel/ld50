@@ -1,5 +1,7 @@
 package entities;
 
+import h2d.Tile;
+
 class Actor extends WorldObject {
 	public var vx = 0.;
 	public var vy = 0.;
@@ -14,6 +16,13 @@ class Actor extends WorldObject {
 	public var groundFriction = 0.9;
 
 	public var hideShadow = false;
+
+	public var customShadow: Tile = null;
+
+	var radius: Float = 8.;
+	var mass: Float = 1.;
+	var uncollidable: Bool = false;
+	var filterGroup: Int = 0;
 
 	override function tick(dt:Float) {
 		super.tick(dt);

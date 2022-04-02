@@ -8,6 +8,8 @@ class WorldObject {
 	public var y = 0.;
 	public var z = 0.;
 
+	public var rotation: Float = 0.;
+
 	public var keepInBounds = true;
 
 	public var dead = false;
@@ -23,7 +25,7 @@ class WorldObject {
 
 	public function draw() {
 		if (tile != null) {
-			state.actorGroup.add(Math.round(x), Math.round(y + z), tile);
+			state.actorGroup.addTransform(Math.round(x), Math.round(y + z), 1, 1, rotation, tile);
 		}
 	}
 }
