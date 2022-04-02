@@ -15,6 +15,9 @@ class Animation {
 	public var looping:Bool;
 	public var finished:Bool;
 
+	public var originX = 0.;
+	public var originY = 0.;
+
 	public var currentFrame:Int = 0;
 	public var currentAnimationName:AnimationId;
 
@@ -135,7 +138,11 @@ class Animation {
 	}
 
 	public function getCurrentTile():h2d.Tile {
-		return getCurrentFrame().tile;
+		var frame = getCurrentFrame();
+		var t = frame.tile;
+		t.dx = (frame.offsetX - originX);
+		t.dy = (frame.offsetY - originY);
+		return t;
 	}
 
 	public inline function getCurrentAnimation() {

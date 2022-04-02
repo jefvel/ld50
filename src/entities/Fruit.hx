@@ -26,7 +26,7 @@ class Fruit extends Actor {
 			keepInBounds = false;
 			friction = 0.99;
 			groundFriction = 0.5;
-			if (vx * vx + vy * vy < 1 && Math.abs(z) < 1) {
+			if (vx * vx + vy * vy < 0.3 * 0.3 && Math.abs(z) < 1) {
 				thrown = false;
 			}
 		} else {

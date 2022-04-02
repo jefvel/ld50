@@ -147,9 +147,11 @@ class PlayState extends elke.gamestate.GameState {
 		guy.throwFruit();
 	}
 
-	var time = 0.0;
+	public var time = 0.0;
 
 	override function tick(dt:Float) {
+		if (game.paused) return;
+
 		time += dt;
 
 		var vx = 0.;

@@ -10,6 +10,8 @@ class Guy extends Actor {
 	var originY = 32;
 	var flipX = false;
 
+	var shaking = false;
+
 	public var pickupRadius = 20.;
 
 	public var maxFruit = 4;
@@ -26,6 +28,8 @@ class Guy extends Actor {
 		friction = 0.7;
 
 		sprite = hxd.Res.img.guy_tilesheet.toAnimation();
+		sprite.originX = originX;
+		sprite.originY = originY;
 		var tName = hxd.Res.img.guy_tilesheet.name;
 		if (s.atlas.getNamedTile(tName) == null){
 			var tile = s.atlas.addNamedTile(sprite.tileSheet.tile, tName);
@@ -79,6 +83,8 @@ class Guy extends Actor {
 
 		state.game.sound.playWobble(hxd.Res.sound.preparethrow, 0.3);
 
+		shaking = true;
+
 		return true;
 	}
 
@@ -86,6 +92,8 @@ class Guy extends Actor {
 		if (!aiming) {
 			return;
 		}
+
+		shaking = false;
 
 		toThrow.held = false;
 		toThrow.thrown = true;
@@ -171,8 +179,8 @@ class Guy extends Actor {
 
 	override function draw() {
 		var t = sprite.getCurrentTile();
-		var bx = Math.round(x - (flipX ? -originX : originX));
-		var by = Math.round(y - originY);
+		var bx = Math.round(x);
+		var by = Math.round(y);
 		var sx = flipX ? -1 : 1;
 
 		if (toThrow != null) {
@@ -180,6 +188,9 @@ class Guy extends Actor {
 			throwLine.y = Math.round(toThrow.y + toThrow.z - 8);
 		}
 
-		state.actorGroup.addTransform(bx, by, sx, 1, 0, t);
+		var r = 0.;
+		if (shaking) r = Math.sin(state.time * 180) * 0.05;
+
+		state.actorGroup.addTransform(bx, by, sx, 1, r, t);
 	}
 }
