@@ -26,6 +26,7 @@ class PlayState extends elke.gamestate.GameState {
 	var container:Object;
 	var uiContainer:Object;
 
+	var worldWrapper: Object;
 	public var world: Object;
 	public var background: Object;
 	public var foreground: Object;
@@ -37,6 +38,9 @@ class PlayState extends elke.gamestate.GameState {
 	var fruitTile: Tile;
 	var shadowGroup: TileGroup;
 	public var actorGroup: TileGroup;
+
+	public var hpBarTile: Tile;
+	public var hpBarsGroup: TileGroup;
 
 	public var actors: Array<Actor> = [];
 	public var objects: Array<WorldObject> = [];
@@ -50,6 +54,7 @@ class PlayState extends elke.gamestate.GameState {
 	public var guy: Guy;
 	public var catapult: Catapult;
 
+	public var levels: LevelData.LevelData;
 	public var level: LevelData.LevelData_Level;
 
 	var collisions: CollisionHandler;
@@ -71,6 +76,10 @@ class PlayState extends elke.gamestate.GameState {
 
 		atlas = new TextureAtlas();
 
+		var w = new LevelData();
+		levels = w;
+		level = w.all_levels.Level_0;
+
 		var bigShadow = hxd.Res.img.shadow.toTile();
 		shadowTile = bigShadow.sub(0, 0, 16, 8);
 		shadowTile.dx = -8;
@@ -86,11 +95,17 @@ class PlayState extends elke.gamestate.GameState {
 
 		fruitTile = atlas.addTile(hxd.Res.img.fruits.toTile());
 
-		world = new Object(container);
+		worldWrapper = new Object(container);
+		world = new Object(worldWrapper);
+		var worldMask = new Bitmap(Tile.fromColor(0xffffff, level.pxWid, level.pxHei), world);
+		worldWrapper.filter = new h2d.filter.Mask(worldMask);
 		background = new Object(world);
 		shadowGroup = new TileGroup(bigShadow, world);
 		actorGroup = new TileGroup(atlas.atlasTile, world);
 		foreground = new Object(world);
+
+		hpBarTile = Tile.fromColor(0xffffff);
+		hpBarsGroup = new TileGroup(hpBarTile, foreground);
 
 		game.s2d.filter = null;
 
@@ -110,9 +125,10 @@ class PlayState extends elke.gamestate.GameState {
 			return;
 		}
 
-		lava = level.l_Lava.render();
+		var llevl = levels.all_levels.Level_1;
+		lava = llevl.l_Lava.render();
 		foreground.addChild(lava);
-		lava.y = -level.pxHei - 400.;
+		lava.y = -llevl.pxHei - 400.;
 		lost = true;
 
 		whiteFlash = new Bitmap(Tile.fromColor(0xffffff, 1, 1), uiContainer);
@@ -138,8 +154,6 @@ class PlayState extends elke.gamestate.GameState {
 	var colorMatrix = Matrix.I();
 
 	public function startGame() {
-		var w = new LevelData();
-		level = w.all_levels.Level_0;
 
 		collisions = new CollisionHandler();
 
@@ -205,12 +219,16 @@ class PlayState extends elke.gamestate.GameState {
 		spawnIn = baddieSpawnInterval;
 
 		var spawnCount = 1;
-		if (wave > 3) {
+		if (wave > 2) {
 			spawnCount = 2;
 		}
 
-		if (wave > 6) {
+		if (wave > 5) {
 			spawnCount = 3;
+		}
+
+		if (wave > 7) {
+			spawnCount = 4;
 		}
 
 		for (_ in 0...spawnCount) {
@@ -293,8 +311,11 @@ class PlayState extends elke.gamestate.GameState {
 				cam.alpha *= 0.91;
 			}
 
-			if (lava.y + level.pxHei > guy.y) {
-				guy.kill();
+			if (lava.y + levels.all_levels.Level_1.pxHei > guy.y) {
+				if (!guy.dead) {
+					guy.kill();
+					whiteFlash.alpha = 1.0;
+				}
 				alphaFadeout -= dt;
 				if (alphaFadeout < 0) {
 					world.alpha *= 0.94;
@@ -403,6 +424,8 @@ class PlayState extends elke.gamestate.GameState {
 							f.y -= dy * 2;
 							hitWithFruit = true;
 							b.hurt(dratio);
+
+							addScore(10);
 						}
 					}
 				}
@@ -451,6 +474,7 @@ class PlayState extends elke.gamestate.GameState {
 			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadow);
 		}
 
+		hpBarsGroup.clear();
 		actorGroup.clear();
 		for (a in objects) {
 			a.draw();

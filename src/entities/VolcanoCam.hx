@@ -69,7 +69,7 @@ class VolcanoCam extends Entity2D {
 
 	public var currentLevel = 0.;
 	//public var maxLevel = 40.0;
-	public var maxLevel = 40.;
+	public var maxLevel = 5.;
 
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
@@ -96,8 +96,8 @@ class VolcanoCam extends Entity2D {
 		volcano.animation.play("idle");
 
 		frame.x = frame.y = 8;
-		cameraContent.x = frame.x + 4;
-		cameraContent.y = frame.y + 4;
+		cameraContent.x = frame.x;
+		cameraContent.y = frame.y;
 
 		var camMask = new Bitmap(Tile.fromColor(0xffffff, width, height), cameraContent);
 
@@ -240,11 +240,36 @@ class VolcanoCam extends Entity2D {
 		super.onRemove();
 		rumbleSound.stop();
 	}
+
+	var tickTock = false;
+	function playTickTock() {
+		tickTock = !tickTock;
+		if (tickTock) {
+			state.game.sound.playSfx(hxd.Res.sound.tick, 0.7);
+		} else {
+			state.game.sound.playSfx(hxd.Res.sound.tock, 0.7);
+		}
+	}
 	
 	var loseImminent = 1.0;
+	var previousSecond = 0;
 	override function update(dt:Float) {
 		super.update(dt);
 		t += dt;
+
+
+		cameraContent.alpha = 1.0;
+		if (state.guy.x < 300 && state.game.s2d.mouseX < 300 && state.game.s2d.mouseY < 100) {
+			//frame.x = getScene().width - 8 - width - 8;
+			//lowerInfo.x = frame.x - lowerInfo.getBounds().width - 14;
+			cameraContent.alpha = 0.5;
+		} else if (state.guy.x > state.level.pxWid - 200) {
+			//frame.x = 8;
+			//lowerInfo.x = width + 14 + frame.x;
+			//lowerInfo.y = frame.y;
+		}
+		cameraContent.x = frame.x + 4;
+		cameraContent.y = frame.y + 4;
 
 		checkScoreQueue(dt);
 
@@ -294,6 +319,15 @@ class VolcanoCam extends Entity2D {
 		barFill.scaleX = (currentLevel / maxLevel);
 
 		var timeLeft = Math.round(maxLevel -currentLevel);
+		if (timeLeft != previousSecond) {
+			if (timeLeft <= 5) {
+				playTickTock();
+			} else {
+				tickTock = false;
+			}
+		}
+		previousSecond = timeLeft;
+
 		if (timeLeft > 0) {
 			etaText.text = 'ERUPTION ETA ${timeLeft} s';
 		} else {
