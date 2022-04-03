@@ -45,6 +45,9 @@ class Catapult extends Actor {
 		firing = false;
 		sprite.play("idle");
 		untilFire = 5.0;
+		if (bigShot) {
+			untilFire -= Math.random() * 0.5 - 0.5;
+		}
 	}
 
 	var toCatapult: Array<Actor> = [];
@@ -58,8 +61,10 @@ class Catapult extends Actor {
 	}
 
 	var lastFrame = -1;
+	var bigShot = false;
 	function enterFrame(index: Int) {
 		if (index == 3) {
+			bigShot = false;
 			var threwBaddie = false;
 			for (f in toCatapult) {
 				f.vy = -20 - Math.random() * 20;
@@ -72,6 +77,10 @@ class Catapult extends Actor {
 				if (f.type == Baddie) {
 					threwBaddie = true;
 				}
+			}
+
+			if (toCatapult.length > 3) {
+				bigShot = true;
 			}
 
 			if (toCatapult.length > 0) {
@@ -132,6 +141,7 @@ class Catapult extends Actor {
 
 				if (a.beingThrown) continue;
 				if (!a.catapultable) continue;
+				if (a.dead) continue;
 
 				var dx = a.x - x;
 				var dy = a.y - y;

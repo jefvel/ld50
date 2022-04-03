@@ -19,6 +19,7 @@ class WorldObject {
 	public var tile: Tile = null;
 
 	public var scale = 1.;
+	public var alpha = 1.0;
 
 	var state: PlayState;
 	public function new(state: PlayState) {

@@ -19,6 +19,7 @@ class Fruit extends Actor {
 		pickupable = true;
 
 		type = Fruit;
+		name = data.Name;
 
 		edgePadding = 40;
 

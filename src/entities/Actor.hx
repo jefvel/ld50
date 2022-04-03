@@ -20,8 +20,10 @@ class Actor extends WorldObject {
 	public var maxSpeed = 20.0;
 	public var gravity = 0.5;
 	public var bounciness = 0.3;
-	
+
+	public var name = "";
 	public var volcanoValue = 1.;
+	public var score = 100;
 
 	public var type : ActorType = Unspecified;
 

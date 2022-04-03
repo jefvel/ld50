@@ -55,6 +55,14 @@ class Guy extends Actor {
 		}
 	}
 
+	override function kill() {
+		if (dead) {
+			return;
+		}
+		super.kill();
+		state.game.sound.playSfx(hxd.Res.sound.playerdead, 0.7);
+	}
+
 	public function pickupFruit(fruit: Actor) {
 		if (heldFruit.length >= maxFruit) {
 			return;

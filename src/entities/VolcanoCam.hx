@@ -1,5 +1,9 @@
 package entities;
 
+import h2d.filter.Glow;
+import elke.T;
+import h2d.RenderContext;
+import elke.utils.EasedFloat;
 import gamestates.PlayState;
 import elke.graphics.Sprite;
 import h2d.Tile;
@@ -9,6 +13,44 @@ import h2d.Bitmap;
 import h2d.ScaleGrid;
 import elke.entity.Entity2D;
 
+class ScoreAdd extends Object {
+	public var text: Text;
+	var fade = new EasedFloat(1, 3.4);
+	var alphaFade = new EasedFloat(0, 1.5);
+	public function new(label: String, p) {
+		super(p);
+		alphaFade.easeFunction = T.expoOut;
+		text = new Text(hxd.Res.fonts.futilepro_medium_12.toFont(), this);
+		text.text = label;
+		text.textColor = 0xfffdf0;
+		/*
+		text.dropShadow = {
+			dx: 1,
+			dy: 1, 
+			color: 0x150a1f,
+			alpha: 1,
+		};
+		*/
+	}
+
+	override function sync(ctx:RenderContext) {
+		super.sync(ctx);
+		var v = fade.value;
+		var a = alphaFade.value;
+		text.y = v * 46.0;
+		//text.alpha = Math.min(1, a * 3.);
+		text.visible = a > 0.1;
+	}
+
+	public function show(label) {
+		fade.setImmediate(0);
+		fade.value = 1;
+		alphaFade.setImmediate(1);
+		alphaFade.value = 0;
+		text.text = label;
+	}
+}
+
 class VolcanoCam extends Entity2D {
 	var frame: ScaleGrid;
 	var dot: Bitmap;
@@ -17,10 +59,17 @@ class VolcanoCam extends Entity2D {
 	var height = 80;
 	var text: Text;
 	var etaText: Text;
+	var scoreText: Text;
+
+	var timeText: Text;
+	var timeTextBg: Bitmap;
+
+	var scoreTexts: Array<ScoreAdd> = [];
+	var thingsToEat: Array<Actor> = [];
 
 	public var currentLevel = 0.;
-	//public var maxLevel = 60.0;
-	public var maxLevel = 10.;
+	//public var maxLevel = 40.0;
+	public var maxLevel = 40.;
 
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
@@ -45,7 +94,10 @@ class VolcanoCam extends Entity2D {
 		bg.animation.currentFrame = 0;
 		volcano = hxd.Res.img.volcano_tilesheet.toSprite2D(cameraContent);
 		volcano.animation.play("idle");
-		cameraContent.x = cameraContent.y = 4;
+
+		frame.x = frame.y = 8;
+		cameraContent.x = frame.x + 4;
+		cameraContent.y = frame.y + 4;
 
 		var camMask = new Bitmap(Tile.fromColor(0xffffff, width, height), cameraContent);
 
@@ -58,8 +110,17 @@ class VolcanoCam extends Entity2D {
 		dot.x = -6;
 		dot.y = 6;
 
+		timeTextBg = new Bitmap(Tile.fromColor(0x280b26), cameraContent);
+		timeText = new Text(hxd.Res.fonts.marumonica.toFont(), cameraContent);
+		timeText.x = 4;
+		timeText.y = 1;
+
+		timeTextBg.scaleX = width;
+		timeTextBg.scaleY = timeText.y * 2 + timeText.textHeight; 
+		timeTextBg.alpha = 0.2;
+
 		lowerInfo = new Object(this);
-		lowerInfo.x = width + 14;
+		lowerInfo.x = width + 14 + frame.x;
 		lowerInfo.y = cameraContent.y;
 
 		var barHeight = 6;
@@ -67,9 +128,20 @@ class VolcanoCam extends Entity2D {
 
 		barFill = new Bitmap(Tile.fromColor(0xb42313, Std.int(bar.tile.width), Std.int(bar.tile.height)), bar);
 
+		scoreText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
+		scoreText.x = bar.x;
+		scoreText.scale(0.5);
+		scoreText.dropShadow = {
+			color: 0x150a1f,
+			dx: 2,
+			dy: 2,
+			alpha: 1
+		};
+
 		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
+		etaText.y = scoreText.y + scoreText.textHeight * 0.5 + 4;
 		etaText.x = bar.x;
-		bar.y = Math.round(etaText.textHeight * 0.5 + 3);
+		bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
 		etaText.scale(0.5);
 		etaText.dropShadow = {
 			color: 0x150a1f,
@@ -78,20 +150,55 @@ class VolcanoCam extends Entity2D {
 			alpha: 1
 		};
 		rumbleSound = state.game.sound.playSfx(hxd.Res.sound.volcanorumbl, 0, true);
+		var scoreTextContainer = new Object(lowerInfo);
+		scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
+		scoreTextContainer.y = bar.y + barHeight + 2;
+
+		for (i in 0...maxScoreTexts) {
+			var s = new ScoreAdd("", scoreTextContainer);
+			scoreTexts.push(s);
+		}
 	}
 
 	var t = 0.;
 
 	var isMooding = false;
+	var scoreIndex = 0;
+	var maxScoreTexts = 15;
 	public function feed(a: Actor) {
 		if (state.lost) {
 			return;
 		}
 
+		thingsToEat.push(a);
+	}
+
+	var scoreTimeout = 0.;
+	function checkScoreQueue(dt: Float) {
+		scoreTimeout -= dt;
+		if (scoreTimeout > 0) {
+			return;
+		}
+		
+		var a = thingsToEat.shift();
+		if (a == null) {
+			return;
+		}
+
+		state.game.sound.playWobble(hxd.Res.sound.burn);
+		scoreTimeout = 0.2;
+
+		volcano.animation.play("happy", false, true, 0, resetVolcanoMood);
 		currentLevel -= a.volcanoValue;
 		currentLevel = Math.max(0, currentLevel);
-		volcano.animation.play("happy", false, true, 0, resetVolcanoMood);
 		isMooding = true;
+
+		state.addScore(a.score);
+
+		var s = scoreTexts[scoreIndex];
+		scoreIndex ++;
+		scoreIndex %= scoreTexts.length;
+		s.show('-${a.volcanoValue.toMoneyStringFloat()}s ${a.name}');
 	}
 
 	function resetVolcanoMood(_) {
@@ -117,7 +224,7 @@ class VolcanoCam extends Entity2D {
 	public var exploded = false;
 	public function explode() {
 		isMooding = true;
-		state.game.sound.playSfx(hxd.Res.sound.endboom);
+		state.game.sound.playSfx(hxd.Res.sound.endboom, 0.6);
 		volcano.animation.play("explode", false, true, 0, s-> {
 			exploded = true;
 			volcano.animation.play("static");
@@ -134,10 +241,14 @@ class VolcanoCam extends Entity2D {
 		rumbleSound.stop();
 	}
 	
-	var loseImminent = 0.6;
+	var loseImminent = 1.0;
 	override function update(dt:Float) {
 		super.update(dt);
 		t += dt;
+
+		checkScoreQueue(dt);
+
+		timeText.text = state.gameTime.toTimeString();
 
 		dot.visible = Math.sin(t * 3.0) < 0 && !exploded;
 
@@ -153,7 +264,7 @@ class VolcanoCam extends Entity2D {
 			loseImminent -= dt;
 			state.loseGame();
 		} else {
-			loseImminent = 0.5;
+			loseImminent = 1.0;
 		}
 
 		if (isCritical != wasCritical) {
@@ -182,6 +293,13 @@ class VolcanoCam extends Entity2D {
 
 		barFill.scaleX = (currentLevel / maxLevel);
 
-		etaText.text = 'Eruption ETA ${Math.round(maxLevel -currentLevel)} s';
+		var timeLeft = Math.round(maxLevel -currentLevel);
+		if (timeLeft > 0) {
+			etaText.text = 'ERUPTION ETA ${timeLeft} s';
+		} else {
+			etaText.text = 'ERUPTION IMMINENT';
+		}
+
+		scoreText.text = '${Math.round(state.smoothedScore.value).toMoneyString()}';
 	}
 }

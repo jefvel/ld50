@@ -112,7 +112,7 @@ class PlayState extends elke.gamestate.GameState {
 
 		lava = level.l_Lava.render();
 		foreground.addChild(lava);
-		lava.y = -level.pxHei - 700.;
+		lava.y = -level.pxHei - 400.;
 		lost = true;
 
 		whiteFlash = new Bitmap(Tile.fromColor(0xffffff, 1, 1), uiContainer);
@@ -157,7 +157,7 @@ class PlayState extends elke.gamestate.GameState {
 		//addActor(catapult);
 
 		cam = new VolcanoCam(uiContainer, this);
-		cam.x = cam.y = 8;
+		//cam.x = cam.y = 8;
 
 		for (t in level.l_Entities.all_Tree) {
 			var tree = new Tree(this);
@@ -265,12 +265,25 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	public var time = 0.0;
+	public var gameTime = 0.;
+	public var score = 0;
+	public var smoothedScore = new EasedFloat(0, 0.3);
+
+	public function addScore(score: Int) {
+		this.score += score;
+		smoothedScore.value = this.score;
+	}
+
 	var alphaFadeout = 0.8;
 
 	override function tick(dt:Float) {
 		if (game.paused) return;
 
 		time += dt;
+		if (!lost) {
+			gameTime += dt;
+		}
+
 		checkWave(dt);
 
 		if (lava != null) {
@@ -348,6 +361,7 @@ class PlayState extends elke.gamestate.GameState {
 			if (f == guy) continue;
 			if (f.held) continue;
 			if (!f.pickupable) continue;
+			if (f.dead) continue;
 
 			var r = guy.pickupRadius + f.radius;
 			var rSq = r * r;
@@ -366,6 +380,7 @@ class PlayState extends elke.gamestate.GameState {
 					if (f.vx * f.vx + f.vy * f.vy < fmax * fmax) continue;
 
 					for (b in baddies) {
+						if (b.dead) continue;
 						if (b.held || b.catapulted) continue;
 
 						var dx = b.x - f.x;
@@ -412,7 +427,7 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		if (whiteFlash != null) {
-			whiteFlash.alpha *= 0.9;
+			whiteFlash.alpha *= 0.94;
 		}
 	}
 
