@@ -65,6 +65,7 @@ class Guy extends Actor {
 		}
 
 		fruit.held = true;
+		fruit.heldBy = this;
 		heldFruit.push(fruit);
 		fruit.onPickup();
 		state.game.sound.playWobble(hxd.Res.sound.pickup, 0.3);
@@ -98,6 +99,7 @@ class Guy extends Actor {
 		shaking = false;
 
 		toThrow.held = false;
+		toThrow.heldBy = null;
 		toThrow.thrown = true;
 
 		heldFruit.remove(toThrow);

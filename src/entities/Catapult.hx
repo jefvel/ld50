@@ -53,6 +53,7 @@ class Catapult extends Actor {
 		if (!a.catapultable) return;
 		a.uncollidable = true;
 		a.held = true;
+		a.heldBy = this;
 		toCatapult.push(a);
 	}
 

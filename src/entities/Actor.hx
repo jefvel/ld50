@@ -27,8 +27,8 @@ class Actor extends WorldObject {
 
 	public var catapulted = false;
 
-	public var held = false;
 	public var thrown = false;
+	public var heldBy: Actor = null;
 
 	public var groundFriction = 0.9;
 

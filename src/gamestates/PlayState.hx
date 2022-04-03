@@ -259,7 +259,7 @@ class PlayState extends elke.gamestate.GameState {
 		for (a in objects) {
 			a.tick(dt);
 
-			if (a.keepInBounds) {
+			if (a.keepInBounds && !a.held) {
 				a.x = Math.max(16 + a.edgePadding, a.x);
 				a.y = Math.max(80 + a.edgePadding, a.y);
 				a.x = Math.min(level.pxWid - 16 - a.edgePadding, a.x);

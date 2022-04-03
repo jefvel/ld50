@@ -14,6 +14,7 @@ class WorldObject {
 	public var edgePadding = 0.;
 
 	public var dead = false;
+	public var held = false;
 
 	public var tile: Tile = null;
 

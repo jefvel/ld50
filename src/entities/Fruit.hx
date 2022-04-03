@@ -17,6 +17,8 @@ class Fruit extends Actor {
 		catapultable = true;
 		type = Fruit;
 
+		edgePadding = 40;
+
 		volcanoValue = data.Power;
 	}
 
