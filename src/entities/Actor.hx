@@ -8,6 +8,7 @@ enum ActorType {
 	Man;
 	Unspecified;
 	Tree;
+	Catapult;
 }
 
 class Actor extends WorldObject {

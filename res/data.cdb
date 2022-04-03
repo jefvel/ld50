@@ -78,6 +78,66 @@
 			],
 			"separators": [],
 			"props": {}
+		},
+		{
+			"name": "upgrades",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "ID",
+					"kind": null,
+					"scope": null
+				},
+				{
+					"typeStr": "1",
+					"name": "Name",
+					"kind": null
+				},
+				{
+					"typeStr": "1",
+					"name": "Description",
+					"kind": null
+				},
+				{
+					"typeStr": "3",
+					"name": "MaxUpgrades",
+					"kind": null
+				}
+			],
+			"lines": [
+				{
+					"ID": "Helper",
+					"Name": "Helper",
+					"Description": "A small guy who will load closeby fruit into the catapult",
+					"MaxUpgrades": 3
+				},
+				{
+					"ID": "DMG",
+					"Name": "Strength",
+					"Description": "Knocks out baddies more easily",
+					"MaxUpgrades": 1
+				},
+				{
+					"ID": "Capacity",
+					"Name": "Carry Power",
+					"Description": "Increases amount of fruit you can carry",
+					"MaxUpgrades": 2
+				},
+				{
+					"ID": "Resurrect",
+					"Name": "Revive Tree",
+					"Description": "Makes a couple dead trees live again",
+					"MaxUpgrades": 2
+				},
+				{
+					"ID": "Farmer",
+					"Name": "Tree Grower",
+					"Description": "Trees grow fruit faster",
+					"MaxUpgrades": 2
+				}
+			],
+			"separators": [],
+			"props": {}
 		}
 	],
 	"customTypes": [],

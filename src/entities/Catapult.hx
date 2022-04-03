@@ -11,6 +11,8 @@ class Catapult extends Actor {
 	public function new(?s) {
 		super(s);
 
+		type = Catapult;
+
 		sprite = hxd.Res.img.catapult_tilesheet.toAnimation();
 		sprite.originX = 48;
 		sprite.originY = 67;
@@ -52,12 +54,13 @@ class Catapult extends Actor {
 
 	var toCatapult: Array<Actor> = [];
 	public function putIntoCatapult(a: Actor) {
-		if (a.held || a.thrown) return;
-		if (!a.catapultable) return;
+		if (a.held || a.thrown) return false;
+		if (!a.catapultable) return false;
 		a.uncollidable = true;
 		a.held = true;
 		a.heldBy = this;
 		toCatapult.push(a);
+		return true;
 	}
 
 	var lastFrame = -1;
@@ -131,7 +134,9 @@ class Catapult extends Actor {
 
 		positionThingsInCatapult();
 
-		if (!firing) {
+		if (!firing && state.hasTreesLeft()) {
+			var loadedIntoCatapult = false;
+			var bigLoad = false;
 			for (a in state.actors) {
 				if (a == this) continue;
 				if (a.heldBy == this) continue;
@@ -152,7 +157,19 @@ class Catapult extends Actor {
 						a.heldBy = null;
 					}
 
-					putIntoCatapult(a);
+					
+					if (putIntoCatapult(a)) {
+						loadedIntoCatapult = true;
+						if (a.type == Baddie) bigLoad = true;
+					}
+				}
+			}
+
+			if (loadedIntoCatapult) {
+				if (!bigLoad) {
+					state.game.sound.playWobble(hxd.Res.sound.loadcatapult);
+				} else {
+					state.game.sound.playWobble(hxd.Res.sound.bigcatapultload);
 				}
 			}
 		}

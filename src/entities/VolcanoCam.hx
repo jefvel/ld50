@@ -69,7 +69,7 @@ class VolcanoCam extends Entity2D {
 
 	public var currentLevel = 0.;
 	//public var maxLevel = 40.0;
-	public var maxLevel = 5.;
+	public var maxLevel = 40.;
 
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
@@ -255,8 +255,9 @@ class VolcanoCam extends Entity2D {
 	var previousSecond = 0;
 	override function update(dt:Float) {
 		super.update(dt);
-		t += dt;
+		if (state.paused) return;
 
+		t += dt;
 
 		cameraContent.alpha = 1.0;
 		if (state.guy.x < 300 && state.game.s2d.mouseX < 300 && state.game.s2d.mouseY < 100) {
@@ -318,8 +319,8 @@ class VolcanoCam extends Entity2D {
 
 		barFill.scaleX = (currentLevel / maxLevel);
 
-		var timeLeft = Math.round(maxLevel -currentLevel);
-		if (timeLeft != previousSecond) {
+		var timeLeft = Math.round(maxLevel - currentLevel);
+		if (timeLeft < previousSecond) {
 			if (timeLeft <= 5) {
 				playTickTock();
 			} else {

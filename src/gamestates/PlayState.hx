@@ -1,5 +1,7 @@
 package gamestates;
 
+import entities.UpgradeMenu;
+import entities.Helper;
 import elke.process.Timeout;
 import h2d.Bitmap;
 import elke.T;
@@ -68,6 +70,10 @@ class PlayState extends elke.gamestate.GameState {
 
 	public var lost = false;
 
+	public var upgrades: UpgradeMenu;
+
+	var damageMultiplier = 1.;
+
 	public function new() {}
 
 	override function onEnter() {
@@ -94,6 +100,8 @@ class PlayState extends elke.gamestate.GameState {
 		baddieShadowTile.dy = -8;
 
 		fruitTile = atlas.addTile(hxd.Res.img.fruits.toTile());
+
+		upgrades = new UpgradeMenu(game.s2d);
 
 		worldWrapper = new Object(container);
 		world = new Object(worldWrapper);
@@ -187,6 +195,7 @@ class PlayState extends elke.gamestate.GameState {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
 		*/
+		spawnHelper();
 	}
 
 	public function getFruitTile(kind: Data.Fruits) {
@@ -203,6 +212,14 @@ class PlayState extends elke.gamestate.GameState {
 
 		return tile;
 
+	}
+
+	public function hasTreesLeft() {
+		for (a in actors) {
+			if (a.type == Tree && !a.dead) return true;
+		}
+
+		return false;
 	}
 
 	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
@@ -272,6 +289,54 @@ class PlayState extends elke.gamestate.GameState {
 				finishAim();
 			}
 		}
+
+		#if debug
+		if (e.kind == EKeyDown && e.keyCode == Key.P) {
+			if (!paused) {
+				showUpgrades();
+			} else {
+				closeUpgrades();
+			}
+		}
+		#end
+	}
+
+	public function onUpgrade(u: Data.Upgrades) {
+		if (u.ID == Helper) {
+			spawnHelper();
+		}
+
+		if (u.ID == DMG) {
+			damageMultiplier = 3.;
+		}
+
+		if (u.ID == Capacity) {
+			guy.maxFruit += 2;
+		}
+
+
+		closeUpgrades();
+
+	}
+
+	public function showUpgrades() {
+		if (upgrades.shown) return;
+		paused = true;
+		upgrades.showNewUpgrades();
+		blur.useScreenResolution = true;
+		blurEase.value = 7;
+		container.alpha = 0.7;
+		upgrades.onSelect = onUpgrade;
+	}
+
+	var blurEase = new EasedFloat(0, 0.4);
+	var blur = new h2d.filter.Blur(0, 1, 1);
+	public function closeUpgrades() {
+		if (!upgrades.shown) return;
+		paused = false;
+		upgrades.close();
+		blurEase.value = 0;
+		container.alpha = 1.0;
 	}
 
 	function startAim() {
@@ -296,6 +361,7 @@ class PlayState extends elke.gamestate.GameState {
 
 	override function tick(dt:Float) {
 		if (game.paused) return;
+		if (paused) return;
 
 		time += dt;
 		if (!lost) {
@@ -357,7 +423,7 @@ class PlayState extends elke.gamestate.GameState {
 
 			var a = actors[index];
 			if (a.catapulted) {
-				if (a.y < -30) {
+				if (a.y < -10) {
 					a.onRemove();
 					cam.feed(a);
 					index --;
@@ -413,7 +479,7 @@ class PlayState extends elke.gamestate.GameState {
 							dx /= l;
 							dy /= l;
 							var vdst = Math.sqrt(f.vx * f.vx + f.vy * f.vy);
-							var dratio = Math.min(1, vdst / f.maxSpeed + 0.3);
+							var dratio = Math.min(1, vdst / f.maxSpeed + 0.3) * damageMultiplier;
 
 							b.vx += f.vx * 1;
 							b.vy += f.vy * 1;
@@ -458,8 +524,23 @@ class PlayState extends elke.gamestate.GameState {
 		fruits.remove(f);
 	}
 
+	public var paused = false;
+
+	public function spawnHelper() {
+		var helper = new Helper(this);
+		helper.x = level.pxWid * 0.5 + (Math.random() * 0.5 - 0.5) * 2 * 64;
+		helper.y = level.pxHei * 0.5 + (Math.random() * 0.5 - 0.5) * 2 * 64;
+	}
+
 	override function onRender(e:Engine) {
 		super.onRender(e);
+
+		if (blurEase.value > 0) {
+			blur.radius = blurEase.value;
+			container.filter = blur;
+		} else {
+			container.filter = null;
+		}
 
 		if (whiteFlash != null) {
 			whiteFlash.scaleX = game.s2d.width;
@@ -525,5 +606,6 @@ class PlayState extends elke.gamestate.GameState {
 	override function onLeave() {
 		super.onLeave();
 		container.remove();
+		upgrades.remove();
 	}
 }
