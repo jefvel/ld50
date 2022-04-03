@@ -111,9 +111,13 @@ class Catapult extends Actor {
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
-		untilFire -= dt;
-		if (untilFire < 0) {
-			fire();
+
+
+		if(!state.lost) {
+			untilFire -= dt;
+			if (untilFire < 0) {
+				fire();
+			}
 		}
 
 		positionThingsInCatapult();
@@ -121,13 +125,23 @@ class Catapult extends Actor {
 		if (!firing) {
 			for (a in state.actors) {
 				if (a == this) continue;
-				if (a.held) continue;
-				if (Math.abs(a.z) > 1) continue;
+				if (a.heldBy == this) continue;
+				if (!a.held) {
+					if (Math.abs(a.z) > 1 && a.type == Fruit) continue;
+				}
+
+				if (a.beingThrown) continue;
 				if (!a.catapultable) continue;
 
 				var dx = a.x - x;
 				var dy = a.y - y;
-				if (dx * dx  + dy * dy < 64 * 64) {
+				var r = 80.;
+				if (dx * dx  + dy * dy < r * r) {
+					if (a.held) {
+						a.held = false;
+						a.heldBy = null;
+					}
+
 					putIntoCatapult(a);
 				}
 			}

@@ -80,6 +80,7 @@ class Guy extends Actor {
 		}
 
 		toThrow = heldFruit[0];
+		toThrow.beingThrown = true;
 		aiming = true;
 
 		throwLine.active = true;
@@ -97,6 +98,7 @@ class Guy extends Actor {
 		}
 
 		shaking = false;
+		toThrow.beingThrown = false;
 
 		toThrow.held = false;
 		toThrow.heldBy = null;
@@ -139,6 +141,10 @@ class Guy extends Actor {
 		moveSpeedMultiplier = (aiming || throwing) ? 0.2 : 1;
 
 		for (f in heldFruit) {
+			if (f.heldBy != this) {
+				heldFruit.remove(f);
+			}
+
 			var p = f == toThrow ? rightArm : leftArm;
 
 			var px = x + p.x - originX;

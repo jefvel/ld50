@@ -1,5 +1,6 @@
 package entities;
 
+import elke.T;
 import h2d.Tile;
 
 class Fruit extends Actor {
@@ -15,6 +16,8 @@ class Fruit extends Actor {
 
 		uncollidable = true;
 		catapultable = true;
+		pickupable = true;
+
 		type = Fruit;
 
 		edgePadding = 40;
@@ -26,6 +29,11 @@ class Fruit extends Actor {
 		super.tick(dt);
 		if (held) {
 			vz = 0.;
+		}
+
+		ripeTime -= dt;
+		if (scale < 1 || ripeTime > 0) {
+			scale = Math.min(1, T.elasticOut(T.quintIn(1 - (ripeTime / maxRipeTime))));
 		}
 
 		if (thrown) {
@@ -43,6 +51,12 @@ class Fruit extends Actor {
 				onRemove();
 			}
 		}
+	}
+
+	public var ripeTime = 5.0;
+	var maxRipeTime = 5.0;
+	public function isRipe() {
+		return ripeTime <= 0.;
 	}
 
 	public override function onAdd() {

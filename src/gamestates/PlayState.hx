@@ -1,5 +1,7 @@
 package gamestates;
 
+import elke.process.Timeout;
+import h2d.Bitmap;
 import elke.T;
 import h3d.Matrix;
 import elke.utils.EasedFloat;
@@ -59,6 +61,8 @@ class PlayState extends elke.gamestate.GameState {
 	var criticalFade = new EasedFloat(0, 2.5);
 	var isCritical = false;
 
+	public var lost = false;
+
 	public function new() {}
 
 	override function onEnter() {
@@ -99,6 +103,38 @@ class PlayState extends elke.gamestate.GameState {
 		startGame();
 	}
 
+	var whiteFlash: Bitmap;
+	var lava: TileGroup;
+	public function loseGame() {
+		if (lost) {
+			return;
+		}
+
+		lava = level.l_Lava.render();
+		foreground.addChild(lava);
+		lava.y = -level.pxHei - 700.;
+		lost = true;
+
+		whiteFlash = new Bitmap(Tile.fromColor(0xffffff, 1, 1), uiContainer);
+
+		endShake.value = 1;
+		criticalFade.value = 1.5;
+
+		cam.explode();
+	}
+
+	var gameoverShown = false;
+	public function showGameover() {
+		if (gameoverShown) {
+			return;
+		}
+		gameoverShown = true;
+		cam.fadeOutSound();
+		new Timeout(2.6, () -> {
+			game.states.setState(new GameOverState(this));
+		});
+	}
+
 	var colorMatrix = Matrix.I();
 
 	public function startGame() {
@@ -131,15 +167,16 @@ class PlayState extends elke.gamestate.GameState {
 			//addActor(tree);
 		}
 
+		/*
 		var frkinds = Data.fruits.all.toArrayCopy();
 		for (_ in 0...100) {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
+		*/
 	}
 
-	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
-	public function spawnFruit(x: Float, y: Float, kind: Data.Fruits) {
-		var tile = null;
+	public function getFruitTile(kind: Data.Fruits) {
+		var tile: Tile = null;
 		if (fruitTiles[kind.ID] != null) {
 			tile = fruitTiles[kind.ID];
 		} else {
@@ -150,6 +187,13 @@ class PlayState extends elke.gamestate.GameState {
 			fruitTiles[kind.ID] = tile;
 		}
 
+		return tile;
+
+	}
+
+	var fruitTiles = new Map<Data.FruitsKind, h2d.Tile>();
+	public function spawnFruit(x: Float, y: Float, kind: Data.Fruits) {
+		var tile = getFruitTile(kind);
 		var fruit = new Fruit(tile, kind, this);
 		fruit.x = x;
 		fruit.y = y;
@@ -161,6 +205,14 @@ class PlayState extends elke.gamestate.GameState {
 		spawnIn = baddieSpawnInterval;
 
 		var spawnCount = 1;
+		if (wave > 3) {
+			spawnCount = 2;
+		}
+
+		if (wave > 6) {
+			spawnCount = 3;
+		}
+
 		for (_ in 0...spawnCount) {
 			var onLeft = Math.random() > 0.5;
 			var b = new Baddie(this);
@@ -171,6 +223,8 @@ class PlayState extends elke.gamestate.GameState {
 
 			b.y = Math.random() * level.pxHei;
 		}
+
+		wave ++;
 	}
 
 	public function checkWave(dt: Float) {
@@ -191,12 +245,14 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	override function onEvent(e:Event) {
-		if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
-			startAim();
-		}
+		if (!guy.dead) {
+			if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
+				startAim();
+			}
 
-		if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
-			finishAim();
+			if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
+				finishAim();
+			}
 		}
 	}
 
@@ -209,12 +265,30 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	public var time = 0.0;
+	var alphaFadeout = 0.8;
 
 	override function tick(dt:Float) {
 		if (game.paused) return;
 
 		time += dt;
 		checkWave(dt);
+
+		if (lava != null) {
+			lava.y += 3.;
+			lava.y = Math.min(lava.y, 128);
+			if (cam.exploded) {
+				cam.alpha *= 0.91;
+			}
+
+			if (lava.y + level.pxHei > guy.y) {
+				guy.kill();
+				alphaFadeout -= dt;
+				if (alphaFadeout < 0) {
+					world.alpha *= 0.94;
+				}
+				showGameover();
+			}
+		}
 
 		var vx = 0.;
 		var vy = 0.;
@@ -233,8 +307,10 @@ class PlayState extends elke.gamestate.GameState {
 			vy -= sp;
 		}
 
-		guy.vx += vx;
-		guy.vy += vy;
+		if (!guy.dead) {
+			guy.vx += vx;
+			guy.vy += vy;
+		}
 
 		objects.sort((a, b) -> (a.y - b.y < 0) ? -1 : 1);
 
@@ -271,15 +347,17 @@ class PlayState extends elke.gamestate.GameState {
 		for (f in actors) {
 			if (f == guy) continue;
 			if (f.held) continue;
-			if (!f.catapultable) continue;
+			if (!f.pickupable) continue;
 
 			var r = guy.pickupRadius + f.radius;
 			var rSq = r * r;
 
-			var dx = guy.x - f.x;
-			var dy = guy.y - f.y;
-			if (dx * dx + dy * dy < rSq) {
-				guy.pickupFruit(f);
+			if (Math.abs(f.z) < 2) {
+				var dx = guy.x - f.x;
+				var dy = guy.y - f.y;
+				if (dx * dx + dy * dy < rSq) {
+					guy.pickupFruit(f);
+				}
 			}
 
 			if (f.type == Fruit) {
@@ -298,6 +376,8 @@ class PlayState extends elke.gamestate.GameState {
 							var l = Math.sqrt(lsq);
 							dx /= l;
 							dy /= l;
+							var vdst = Math.sqrt(f.vx * f.vx + f.vy * f.vy);
+							var dratio = Math.min(1, vdst / f.maxSpeed + 0.3);
 
 							b.vx += f.vx * 1;
 							b.vy += f.vy * 1;
@@ -307,6 +387,7 @@ class PlayState extends elke.gamestate.GameState {
 							f.x -= dx * 2;
 							f.y -= dy * 2;
 							hitWithFruit = true;
+							b.hurt(dratio);
 						}
 					}
 				}
@@ -316,7 +397,6 @@ class PlayState extends elke.gamestate.GameState {
 		if (hitWithFruit) {
 			game.sound.playWobble(hxd.Res.sound.fruithit);
 		}
-
 
 		var o: Array<CollisionObject> = cast actors;
 		collisions.resolve(o);
@@ -330,6 +410,10 @@ class PlayState extends elke.gamestate.GameState {
 			criticalFade.value = 0.;
 			isCritical = false;
 		}
+
+		if (whiteFlash != null) {
+			whiteFlash.alpha *= 0.9;
+		}
 	}
 
 	public function removeFruit(f) {
@@ -338,6 +422,11 @@ class PlayState extends elke.gamestate.GameState {
 
 	override function onRender(e:Engine) {
 		super.onRender(e);
+
+		if (whiteFlash != null) {
+			whiteFlash.scaleX = game.s2d.width;
+			whiteFlash.scaleY = game.s2d.height;
+		}
 
 		shadowGroup.clear();
 		for (a in actors) {
@@ -354,6 +443,8 @@ class PlayState extends elke.gamestate.GameState {
 
 		positionWorld();
 	}
+
+	var endShake = new EasedFloat(0, 0.5);
 
 	function positionWorld(){
 		world.x = Math.round(-guy.x * world.scaleX + game.s2d.width * 0.5);
@@ -378,6 +469,10 @@ class PlayState extends elke.gamestate.GameState {
 
 		world.x = Math.round(world.x + Math.sin(time * 60) * criticalFade.value * 1);
 		world.y = Math.round(world.y);
+		if (endShake.value > 0) {
+			world.x += Math.cos(time * 50) * endShake.value * 3;
+			world.y += Math.sin(time * 53) * endShake.value * 3;
+		}
 
 		colorMatrix.identity();
 		var v = criticalFade.value;

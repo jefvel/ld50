@@ -30,6 +30,11 @@ class Actor extends WorldObject {
 	public var thrown = false;
 	public var heldBy: Actor = null;
 
+	public var offsetX = .0;
+	public var offsetY = 0.;
+
+	public var beingThrown = false;
+
 	public var groundFriction = 0.9;
 
 	public var hideShadow = false;
@@ -37,6 +42,7 @@ class Actor extends WorldObject {
 	public var customShadow: Tile = null;
 	
 	public var catapultable = false;
+	public var pickupable = false;
 
 	public var radius: Float = 8.;
 	var mass: Float = 1.;
@@ -85,7 +91,7 @@ class Actor extends WorldObject {
 		}
 	}
 
-	public function kill() {}
+	public function kill() {dead = true;}
 
 	override function onAdd() {
 		super.onAdd();

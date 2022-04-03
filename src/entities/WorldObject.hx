@@ -18,6 +18,8 @@ class WorldObject {
 
 	public var tile: Tile = null;
 
+	public var scale = 1.;
+
 	var state: PlayState;
 	public function new(state: PlayState) {
 		this.state = state;
@@ -31,7 +33,7 @@ class WorldObject {
 
 	public function draw() {
 		if (tile != null) {
-			state.actorGroup.addTransform(Math.round(x), Math.round(y + z), 1, 1, rotation, tile);
+			state.actorGroup.addTransform(Math.round(x), Math.round(y + z), scale, scale, rotation, tile);
 		}
 	}
 }

@@ -19,10 +19,11 @@ class VolcanoCam extends Entity2D {
 	var etaText: Text;
 
 	public var currentLevel = 0.;
-	public var maxLevel = 60.0;
+	//public var maxLevel = 60.0;
+	public var maxLevel = 10.;
 
-	var criticalLevel = 0.7;
-	//var criticalLevel = 0.05;
+	var criticalLevel = 0.8;
+	//var criticalLevel = 0.1;
 
 	var lowerInfo: Object;
 	var bar: Bitmap;
@@ -76,12 +77,17 @@ class VolcanoCam extends Entity2D {
 			dy: 2,
 			alpha: 1
 		};
+		rumbleSound = state.game.sound.playSfx(hxd.Res.sound.volcanorumbl, 0, true);
 	}
 
 	var t = 0.;
 
 	var isMooding = false;
 	public function feed(a: Actor) {
+		if (state.lost) {
+			return;
+		}
+
 		currentLevel -= a.volcanoValue;
 		currentLevel = Math.max(0, currentLevel);
 		volcano.animation.play("happy", false, true, 0, resetVolcanoMood);
@@ -98,19 +104,65 @@ class VolcanoCam extends Entity2D {
 	}
 
 	public var isCritical = false;
+
+	var rumbleSound: hxd.snd.Channel;
+	function enterCritical() {
+		rumbleSound.fadeTo(0.2, 1.6);
+	}
+
+	function leaveCritical() {
+		rumbleSound.fadeTo(0.0);
+	}
+
+	public var exploded = false;
+	public function explode() {
+		isMooding = true;
+		state.game.sound.playSfx(hxd.Res.sound.endboom);
+		volcano.animation.play("explode", false, true, 0, s-> {
+			exploded = true;
+			volcano.animation.play("static");
+			text.text = "CAM OFFLINE";
+		});
+	}
+
+	public function fadeOutSound() {
+		rumbleSound.fadeTo(0.0, 1.6, () -> rumbleSound.stop());
+	}
+
+	override function onRemove() {
+		super.onRemove();
+		rumbleSound.stop();
+	}
 	
+	var loseImminent = 0.6;
 	override function update(dt:Float) {
 		super.update(dt);
 		t += dt;
 
-		dot.visible = Math.sin(t * 3.0) < 0;
+		dot.visible = Math.sin(t * 3.0) < 0 && !exploded;
 
 		text.y = height - text.textHeight - 2;
 		text.x = width - 2 - text.textWidth - 2;
 
 		currentLevel += dt;
 		currentLevel = Math.min(currentLevel, maxLevel);
+		var wasCritical = isCritical;
 		isCritical = currentLevel / maxLevel > criticalLevel;
+
+		if (currentLevel >= maxLevel) {
+			loseImminent -= dt;
+			state.loseGame();
+		} else {
+			loseImminent = 0.5;
+		}
+
+		if (isCritical != wasCritical) {
+			if (isCritical) {
+				enterCritical();
+			} else {
+				leaveCritical();
+			}
+		}
 
 		if (isCritical) {
 			bg.animation.currentFrame = 1;
@@ -131,6 +183,5 @@ class VolcanoCam extends Entity2D {
 		barFill.scaleX = (currentLevel / maxLevel);
 
 		etaText.text = 'Eruption ETA ${Math.round(maxLevel -currentLevel)} s';
-
 	}
 }
