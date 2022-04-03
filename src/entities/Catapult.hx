@@ -36,7 +36,7 @@ class Catapult extends Actor {
 
 		firing = true;
 		sprite.play("fire", false, true, 0, finishFiring);
-		state.game.sound.playSfx(hxd.Res.sound.firecatapult);
+		state.game.sound.playSfx(hxd.Res.sound.firecatapult, 0.35);
 	}
 
 	function finishFiring(_) {
@@ -87,9 +87,9 @@ class Catapult extends Actor {
 			}
 
 			if (toCatapult.length > 0) {
-				state.game.sound.playWobble(hxd.Res.sound.fruitfly, 0.2);
+				state.game.sound.playWobble(hxd.Res.sound.fruitfly, 0.23);
 				if (threwBaddie) {
-					state.game.sound.playWobble(hxd.Res.sound.baddiefling, 0.2);
+					state.game.sound.playWobble(hxd.Res.sound.baddiefling, 0.3);
 				}
 			}
 
@@ -134,7 +134,7 @@ class Catapult extends Actor {
 
 		positionThingsInCatapult();
 
-		if (!firing && state.hasTreesLeft()) {
+		if (!firing) {
 			var loadedIntoCatapult = false;
 			var bigLoad = false;
 			for (a in state.actors) {
@@ -142,6 +142,11 @@ class Catapult extends Actor {
 				if (a.heldBy == this) continue;
 				if (!a.held) {
 					if (Math.abs(a.z) > 1 && a.type == Fruit) continue;
+				}
+
+				if (a.type == Baddie) {
+					var b : Baddie = cast a;
+					if (!b.knockedOut) continue;
 				}
 
 				if (a.beingThrown) continue;

@@ -36,7 +36,7 @@ class Guy extends Actor {
 			sprite.tileSheet.tile = tile;
 		}
 
-		throwLine = new ThrowLine(state.foreground);
+		throwLine = new ThrowLine(state.foreground, state);
 		type = Man;
 	}
 
@@ -51,7 +51,7 @@ class Guy extends Actor {
 
 	function enterFrame(index: Int) {
 		if (index == 3 || index == 5) {
-			state.game.sound.playWobble(sounds.randomElement(), 0.1);
+			state.game.sound.playWobble(sounds.randomElement(), 0.08);
 		}
 	}
 
@@ -83,6 +83,10 @@ class Guy extends Actor {
 	var aiming = false;
 	var throwing = false;
 	public function startAim() {
+		if (aiming) {
+			return false;
+		}
+
 		if (heldFruit.length == 0) {
 			return false;
 		}

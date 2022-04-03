@@ -1,5 +1,6 @@
 package entities;
 
+import h2d.TileGroup;
 import h2d.filter.Glow;
 import elke.T;
 import h2d.RenderContext;
@@ -12,7 +13,6 @@ import h2d.Object;
 import h2d.Bitmap;
 import h2d.ScaleGrid;
 import elke.entity.Entity2D;
-
 class ScoreAdd extends Object {
 	public var text: Text;
 	var fade = new EasedFloat(1, 3.4);
@@ -82,9 +82,25 @@ class VolcanoCam extends Entity2D {
 
 	var state: PlayState;
 
+	var upgradeLevels = [
+		500,
+		1500,
+		4000,
+		7000,
+		10000,
+		12500,
+	];
+
+	var currentUpgradeLevel = 0;
+	var untilNextLevel = 0;
+
+	var peopleGroup: TileGroup;
+
 	public function new(?s, state) {
 		super(s);
 		this.state = state;
+
+		untilNextLevel = upgradeLevels[0];
 
 		cameraContent = new Object(this);
 		frame = new ScaleGrid(hxd.Res.img.cameraframe.toTile(), 5, 5, 5, 5, this);
@@ -123,7 +139,7 @@ class VolcanoCam extends Entity2D {
 		lowerInfo.x = width + 14 + frame.x;
 		lowerInfo.y = cameraContent.y;
 
-		var barHeight = 6;
+		var barHeight = 8;
 		bar = new Bitmap(Tile.fromColor(0xffffff, width, barHeight), lowerInfo);
 
 		barFill = new Bitmap(Tile.fromColor(0xb42313, Std.int(bar.tile.width), Std.int(bar.tile.height)), bar);
@@ -138,6 +154,8 @@ class VolcanoCam extends Entity2D {
 			alpha: 1
 		};
 
+		// todo add exp bar as bg to score scoreText.textColor = 
+
 		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
 		etaText.y = scoreText.y + scoreText.textHeight * 0.5 + 4;
 		etaText.x = bar.x;
@@ -149,7 +167,9 @@ class VolcanoCam extends Entity2D {
 			dy: 2,
 			alpha: 1
 		};
+
 		rumbleSound = state.game.sound.playSfx(hxd.Res.sound.volcanorumbl, 0, true);
+
 		var scoreTextContainer = new Object(lowerInfo);
 		scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
 		scoreTextContainer.y = bar.y + barHeight + 2;
@@ -214,7 +234,7 @@ class VolcanoCam extends Entity2D {
 
 	var rumbleSound: hxd.snd.Channel;
 	function enterCritical() {
-		rumbleSound.fadeTo(0.2, 1.6);
+		rumbleSound.fadeTo(0.28, 1.6);
 	}
 
 	function leaveCritical() {
@@ -224,7 +244,7 @@ class VolcanoCam extends Entity2D {
 	public var exploded = false;
 	public function explode() {
 		isMooding = true;
-		state.game.sound.playSfx(hxd.Res.sound.endboom, 0.6);
+		state.game.sound.playSfx(hxd.Res.sound.endboom, 0.7);
 		volcano.animation.play("explode", false, true, 0, s-> {
 			exploded = true;
 			volcano.animation.play("static");
@@ -250,8 +270,17 @@ class VolcanoCam extends Entity2D {
 			state.game.sound.playSfx(hxd.Res.sound.tock, 0.7);
 		}
 	}
+
+	public function pauseSounds() {
+		rumbleSound.pause = true;
+	}
+
+	public function unPauseSounds() {
+		rumbleSound.pause = false;
+	}
 	
 	var loseImminent = 1.0;
+	var graceTime = 1.0;
 	var previousSecond = 0;
 	override function update(dt:Float) {
 		super.update(dt);
@@ -288,9 +317,11 @@ class VolcanoCam extends Entity2D {
 
 		if (currentLevel >= maxLevel) {
 			loseImminent -= dt;
-			state.loseGame();
+			if (loseImminent < 0) {
+				state.loseGame();
+			}
 		} else {
-			loseImminent = 1.0;
+			loseImminent = graceTime;
 		}
 
 		if (isCritical != wasCritical) {
@@ -335,6 +366,33 @@ class VolcanoCam extends Entity2D {
 			etaText.text = 'ERUPTION IMMINENT';
 		}
 
-		scoreText.text = '${Math.round(state.smoothedScore.value).toMoneyString()}';
+		var untilNext = untilNextLevel.toMoneyString();
+		var scr = Math.round(state.smoothedScore.value);
+		if (!state.lost && hasUpgrades) {
+			if (state.score > untilNextLevel) {
+				scr = untilNextLevel;
+				levelUp();
+			}
+		}
+
+		if (hasUpgrades) {
+			scoreText.text = '${scr.toMoneyString()} / $untilNext';
+		} else {
+			scoreText.text = '${scr.toMoneyString()}';
+		}
+	}
+
+	public var hasUpgrades = true;
+
+	function levelUp() {
+		currentUpgradeLevel ++;
+		if (currentUpgradeLevel >= upgradeLevels.length) {
+			untilNextLevel = Math.round(untilNextLevel * 1.2);
+		} else {
+			untilNextLevel = upgradeLevels[currentUpgradeLevel];
+		}
+
+		state.showUpgrades();
+
 	}
 }

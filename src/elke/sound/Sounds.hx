@@ -31,7 +31,7 @@ class Sounds {
 		musicChannel = new ChannelGroup("music");
 	}
 
-	public function playSfx(snd:Sound, volume = 0.5, loop = false) {
+	public function playSfx(snd:Sound, volume = 0.33, loop = false) {
 		return snd.play(loop, volume, sfxChannel);
 	}
 

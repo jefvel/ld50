@@ -80,6 +80,8 @@ class PlayState extends elke.gamestate.GameState {
 		super.onEnter();
 		container = new Object(game.s2d);
 
+		spawnIn = baddieSpawnInterval * 0.5;
+
 		atlas = new TextureAtlas();
 
 		var w = new LevelData();
@@ -124,7 +126,14 @@ class PlayState extends elke.gamestate.GameState {
 		world.filter.useScreenResolution = false;
 
 		startGame();
+
+		musicChannel = game.sound.playMusic(hxd.Res.sound.playmusic, musicVol);
+		musicEffect = new hxd.snd.effect.LowPass();
+		musicChannel.addEffect(musicEffect);
 	}
+
+	var musicEffect: hxd.snd.effect.LowPass;
+	var musicChannel : hxd.snd.Channel;
 
 	var whiteFlash: Bitmap;
 	var lava: TileGroup;
@@ -132,6 +141,8 @@ class PlayState extends elke.gamestate.GameState {
 		if (lost) {
 			return;
 		}
+
+		musicChannel.stop();
 
 		var llevl = levels.all_levels.Level_1;
 		lava = llevl.l_Lava.render();
@@ -196,6 +207,7 @@ class PlayState extends elke.gamestate.GameState {
 		}
 		*/
 		// spawnHelper();
+		scrollInVal.value = 0;
 	}
 
 	public function getFruitTile(kind: Data.Fruits) {
@@ -233,8 +245,6 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	function spawnWave() {
-		spawnIn = baddieSpawnInterval;
-
 		var spawnCount = 1;
 		if (wave > 2) {
 			spawnCount = 2;
@@ -246,6 +256,19 @@ class PlayState extends elke.gamestate.GameState {
 
 		if (wave > 7) {
 			spawnCount = 4;
+			baddieSpawnInterval = 17;
+		}
+
+		if (wave > 9) {
+			spawnCount = 5;
+		}
+
+		if (wave > 10) {
+			baddieSpawnInterval = 15;
+		}
+
+		if (wave > 11) {
+			baddieSpawnInterval = 15;
 		}
 
 		for (_ in 0...spawnCount) {
@@ -260,6 +283,8 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		wave ++;
+		spawnIn = baddieSpawnInterval;
+
 	}
 
 	public function checkWave(dt: Float) {
@@ -322,6 +347,22 @@ class PlayState extends elke.gamestate.GameState {
 			timePerFruit *= 0.85;
 		}
 
+		if (u.ID == Speed) {
+			guy.maxSpeed *= 1.2;
+			guy.moveSpeed *= 1.2;
+		}
+
+		if (u.ID == Resurrect) {
+			var t = actors.filter(t -> t.type == Tree && t.dead);
+			for (_ in 0...2) {
+				var tree: Tree = cast t.randomElement();
+				if (tree == null) break;
+				t.remove(tree);
+				tree.revive();
+			}
+		}
+
+		cam.hasUpgrades = upgrades.hasUpgradesLeft();
 		closeUpgrades();
 	}
 
@@ -333,14 +374,24 @@ class PlayState extends elke.gamestate.GameState {
 
 		input.disabled = true;
 
+		if (!isCritical) {
+			musicEffect.gainHF = 0.5;
+			musicChannel.fadeTo(0.1, 0.4);
+		}
+
 		paused = true;
 		blur.useScreenResolution = true;
 		blurEase.value = 7;
-		container.alpha = 0.4;
+		upgradeAlphaFade.value = 0.4;
 		upgrades.onSelect = onUpgrade;
+		cam.pauseSounds();
 	}
 
+	var scrollInVal = new EasedFloat(-400, 1.2);
+	var upgradeAlphaFade = new EasedFloat(1, 0.4);
+
 	public var timePerFruit = 7.0;
+	var musicVol = 0.59;
 
 	var blurEase = new EasedFloat(0, 0.4);
 	var blur = new h2d.filter.Blur(0, 1, 1);
@@ -349,8 +400,15 @@ class PlayState extends elke.gamestate.GameState {
 		paused = false;
 		upgrades.close();
 		blurEase.value = 0;
-		container.alpha = 1.0;
+		upgradeAlphaFade.value = 1.0;
 		input.disabled = false;
+
+		if (!isCritical) {
+			musicEffect.gainHF = 1.;
+			musicChannel.fadeTo(musicVol, 0.4);
+		}
+
+		cam.unPauseSounds();
 	}
 
 	function startAim() {
@@ -523,10 +581,12 @@ class PlayState extends elke.gamestate.GameState {
 			if (cam.isCritical) {
 				isCritical = true;
 				criticalFade.value = 1.0;
+				musicChannel.fadeTo(0., 0.8);
 			}
 		} else if (!cam.isCritical) {
 			criticalFade.value = 0.;
 			isCritical = false;
+			musicChannel.fadeTo(musicVol, 0.8);
 		}
 
 		if (whiteFlash != null) {
@@ -555,6 +615,7 @@ class PlayState extends elke.gamestate.GameState {
 		} else {
 			container.filter = null;
 		}
+		container.alpha = upgradeAlphaFade.value;
 
 		if (whiteFlash != null) {
 			whiteFlash.scaleX = game.s2d.width;
@@ -607,6 +668,8 @@ class PlayState extends elke.gamestate.GameState {
 			world.x += Math.cos(time * 50) * endShake.value * 3;
 			world.y += Math.sin(time * 53) * endShake.value * 3;
 		}
+
+		world.y -= Math.round(scrollInVal.value);
 
 		colorMatrix.identity();
 		var v = criticalFade.value;

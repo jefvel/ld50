@@ -36,6 +36,8 @@ class UpgradeButton extends Interactive {
 		super(maxWidth, 1, p);
 		this.onSelect = onSelect;
 		this.data = data;
+		this.currentLevel = currentLevel;
+
 		frame = new ScaleGrid(hxd.Res.img.btnframe.toTile(), 2, 2, 2, 2, this);
 		texts = new Object(this);
 		title = new Text(hxd.Res.fonts.equipmentpro_medium_12.toFont(), texts);
@@ -163,6 +165,19 @@ class UpgradeMenu extends Entity2D {
 		Game.instance.sound.playWobble(hxd.Res.sound.upgradeopen, 0.4);
 
 		return true;
+	}
+
+	public function hasUpgradesLeft() {
+		var upgrades = Data.upgrades.all.toArrayCopy();
+		upgrades = upgrades.filter(u -> {
+			if (!upgradeLevels.exists(u.ID)) {
+				return true;
+			}
+
+			return upgradeLevels[u.ID] < u.MaxUpgrades;
+		});
+
+		return upgrades.length > 0;
 	}
 
 	public function selectUpgrade(u: Data.Upgrades, btn: UpgradeButton) {

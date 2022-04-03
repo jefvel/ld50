@@ -77,7 +77,7 @@ class GameOverState extends GameState {
 		if (e.kind == EPush) {
 			left = true;
 			Transition.to(() -> {
-				game.states.setState(new PlayState());
+				game.states.setState(new MenuState());
 			});
 		}
 	}

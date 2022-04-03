@@ -110,7 +110,6 @@ class Helper extends Actor {
 			return;
 		}
 		super.kill();
-		state.game.sound.playSfx(hxd.Res.sound.playerdead, 0.7);
 	}
 
 	public function pickupFruit(fruit: Actor) {

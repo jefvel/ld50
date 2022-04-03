@@ -19,7 +19,6 @@ class Tree extends Actor {
 
 		shakeForce.easeFunction = T.elasticOut;
 
-		fallVal.easeFunction = T.bounceOut;
 
 		tile = state.atlas.addNamedTile(hxd.Res.img.tree.toTile(), 'tree');
 		tile.dx = -29;
@@ -28,6 +27,25 @@ class Tree extends Actor {
 		type = Tree;
 
 		life = maxLife;
+	}
+
+	public function revive() {
+		life = maxLife;
+		dead = false;
+		fallVal.easeFunction = T.elasticOut;
+		fallVal.value = 0.;
+		uncollidable = false;
+		hideShadow = false;
+	}
+
+	var shakeSfxTimeout = 0.;
+
+	public override function hurt(damage:Float) {
+		super.hurt(damage);
+		if (shakeSfxTimeout < 0) {
+			shakeSfxTimeout = 0.8;
+			state.game.sound.playWobble(hxd.Res.sound.treeshake, 0.2);
+		}
 	}
 
 	public function shake() {
@@ -39,6 +57,7 @@ class Tree extends Actor {
 		if (dead) {
 			return;
 		}
+		fallVal.easeFunction = T.bounceOut;
 		if (Math.random() > 0.5) {
 			fallVal.value = Math.PI * 0.5;
 		} else {
@@ -75,6 +94,8 @@ class Tree extends Actor {
 		super.tick(dt);
 		var shaking = shakeForce.value > 0.7;
 
+		shakeSfxTimeout -= dt;
+
 		if (!dead) {
 			growTime += dt;
 			if (growTime >= state.timePerFruit) {
@@ -85,7 +106,7 @@ class Tree extends Actor {
 
 
 		if (!dead) {
-			rotation = Math.sin(state.time * 90) * 0.05 * shakeForce.value;
+			rotation = fallVal.value + Math.sin(state.time * 90) * 0.05 * shakeForce.value;
 		} else {
 			rotation = fallVal.value;
 		}

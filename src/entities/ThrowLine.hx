@@ -1,5 +1,6 @@
 package entities;
 
+import gamestates.PlayState;
 import elke.utils.EasedFloat;
 import h2d.col.Point;
 import h2d.Bitmap;
@@ -27,8 +28,10 @@ class ThrowLine extends Object {
 
 	var targetAlpha = new EasedFloat(0, 0.2);
 
-	public function new(?p) {
+	var state: PlayState;
+	public function new(?p, s) {
 		super(p);
+		this.state = s;
 		arrow = new Bitmap(hxd.Res.img.arrow.toTile(), this);
 		arrow.tile.dy = -4;
 		graphics = new Graphics(this);
@@ -40,6 +43,10 @@ class ThrowLine extends Object {
 		alpha = targetAlpha.value * aimTime.value;
 		arrow.visible = graphics.visible = alpha > 0;
 		if (!active) {
+			return;
+		}
+
+		if (state.paused) {
 			return;
 		}
 

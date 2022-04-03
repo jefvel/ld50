@@ -90,7 +90,7 @@ class Baddie extends Actor {
 		uncollidable = false;
 	}
 
-	var knockedOut = false;
+	public var knockedOut = false;
 	var knockoutTime = 0.0;
 	public function knockout() {
 		pickupable = true;
@@ -133,7 +133,7 @@ class Baddie extends Actor {
 
 	function enterFrame(index: Int) {
 		if (index == 3 || index == 5) {
-			state.game.sound.playWobble(sounds.randomElement(), 0.1);
+			state.game.sound.playWobble(sounds.randomElement(), 0.04);
 		}
 
 		var eatFrame = 11;
@@ -201,7 +201,7 @@ class Baddie extends Actor {
 		target.held = true;
 		target.heldBy = this;
 		sprite.play("eat", false, true, 0, finishEat);
-		state.game.sound.playWobble(hxd.Res.sound.eat, 0.2);
+		state.game.sound.playWobble(hxd.Res.sound.eat, 0.21);
 	}
 
 	function finishEat(_) {
@@ -275,7 +275,7 @@ class Baddie extends Actor {
 		}
 
 		needToEat -= dt;
-		if (knockedOut) {
+		if (knockedOut && !thrown && !held) {
 			knockoutTime -= dt;
 			if (knockoutTime <= 0) {
 				resetKnockout();
