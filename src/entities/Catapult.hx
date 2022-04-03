@@ -52,7 +52,7 @@ class Catapult extends Actor {
 		}
 	}
 
-	var toCatapult: Array<Actor> = [];
+	public var toCatapult: Array<Actor> = [];
 	public function putIntoCatapult(a: Actor) {
 		if (a.held || a.thrown) return false;
 		if (!a.catapultable) return false;

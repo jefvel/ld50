@@ -1,5 +1,7 @@
 package gamestates;
 
+import h2d.Interactive;
+import entities.Toggle;
 import h2d.Text;
 import elke.graphics.Transition;
 import hxd.Perlin;
@@ -22,6 +24,8 @@ class MenuState extends GameState {
 	var title: Text;
 	var titleSubtitle: Text;
 
+	var toggle: Toggle;
+
 	public function new(){}
 
 	override function onEnter() {
@@ -38,6 +42,12 @@ class MenuState extends GameState {
 		game.s2d.filter = null;
 		imgContainer.filter = new h2d.filter.Mask(mask);
 
+		var playBtn = new Interactive(mask.width, mask.height, imgContainer);
+		playBtn.onPush = e -> {
+			startGame();
+			playBtn.remove();
+		}
+
 		title = new Text(hxd.Res.fonts.gridgazer.toFont(), container);
 		title.textAlign = Left;
 		title.text = "Volcano Maintenance";
@@ -45,6 +55,10 @@ class MenuState extends GameState {
 		titleSubtitle = new Text(hxd.Res.fonts.futilepro_medium_12.toFont(), title);
 		titleSubtitle.textAlign = Left;
 		titleSubtitle.text = "Click to Play";
+
+		var data = GameSaveData.getCurrent();
+		toggle = new Toggle(container);
+		toggle.value = data.showTutorial;
 
 		positionStuff();
 	}
@@ -58,6 +72,10 @@ class MenuState extends GameState {
 	var started = false;
 	function startGame() {
 		if(started) return;
+		var s = GameSaveData.getCurrent();
+		s.showTutorial = toggle.value;
+		s.save();
+
 		started = true;
 		out.value = -200.;
 		alphaOut.value = 0;
@@ -109,13 +127,13 @@ class MenuState extends GameState {
 		titleSubtitle.x = title.textWidth + 8;
 		titleSubtitle.y = Math.round((title.textHeight - titleSubtitle.textHeight - 3));
 		titleSubtitle.alpha = Math.abs(Math.sin(time));
+
+		toggle.x = title.x;
+		toggle.y = title.y - 28;
 	}
 
 	override function onEvent(e:Event) {
 		super.onEvent(e);
-		if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
-			startGame();
-		}
 	}
 
 	override function onRender(e:Engine) {

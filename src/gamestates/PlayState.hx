@@ -1,5 +1,6 @@
 package gamestates;
 
+import entities.TutorialSteps;
 import entities.UpgradeMenu;
 import entities.Helper;
 import elke.process.Timeout;
@@ -206,9 +207,16 @@ class PlayState extends elke.gamestate.GameState {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
 		*/
+
 		// spawnHelper();
+
 		scrollInVal.value = 0;
+		if (GameSaveData.getCurrent().showTutorial) {
+			tutorial = new TutorialSteps(uiContainer, this);
+		}
 	}
+
+	var tutorial : TutorialSteps;
 
 	public function getFruitTile(kind: Data.Fruits) {
 		var tile: Tile = null;
@@ -312,6 +320,9 @@ class PlayState extends elke.gamestate.GameState {
 
 			if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
 				finishAim();
+				if (tutorial != null) {
+					tutorial.threwThing = true;
+				}
 			}
 		}
 
@@ -391,7 +402,7 @@ class PlayState extends elke.gamestate.GameState {
 	var upgradeAlphaFade = new EasedFloat(1, 0.4);
 
 	public var timePerFruit = 7.0;
-	var musicVol = 0.59;
+	var musicVol = 0.62;
 
 	var blurEase = new EasedFloat(0, 0.4);
 	var blur = new h2d.filter.Blur(0, 1, 1);
@@ -434,6 +445,10 @@ class PlayState extends elke.gamestate.GameState {
 	override function tick(dt:Float) {
 		if (game.paused) return;
 		if (paused) return;
+
+		if (tutorial != null) {
+			tutorial.update(dt);
+		}
 
 		time += dt;
 		if (!lost) {
@@ -609,6 +624,7 @@ class PlayState extends elke.gamestate.GameState {
 	override function onRender(e:Engine) {
 		super.onRender(e);
 
+
 		if (blurEase.value > 0) {
 			blur.radius = blurEase.value;
 			container.filter = blur;
@@ -654,12 +670,17 @@ class PlayState extends elke.gamestate.GameState {
 		world.x = Math.max((-scaledWidth + game.s2d.width ), world.x);
 		world.y = Math.max((-scaledHeight + game.s2d.height ), world.y);
 
+
 		if (scaledWidth < game.s2d.width) {
 			world.x = Math.round((game.s2d.width - scaledWidth) * 0.5);
 		}
 
 		if (scaledHeight < game.s2d.height) {
 			world.y = Math.round((game.s2d.height - scaledHeight) * 0.5);
+		}
+
+		if (tutorial != null) {
+			tutorial.updatePos();
 		}
 
 		world.x = Math.round(world.x + Math.sin(time * 60) * criticalFade.value * 1);
@@ -677,6 +698,7 @@ class PlayState extends elke.gamestate.GameState {
 		var g = T.mix(1, 0.54, v);
 		var b = T.mix(1, 0.8, v);
 		colorMatrix.scale(r, g, b);
+
 	}
 
 

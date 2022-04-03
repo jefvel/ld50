@@ -69,7 +69,7 @@ class VolcanoCam extends Entity2D {
 
 	public var currentLevel = 0.;
 	//public var maxLevel = 40.0;
-	public var maxLevel = 40.;
+	public var maxLevel = 4.;
 
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
@@ -310,7 +310,9 @@ class VolcanoCam extends Entity2D {
 		text.y = height - text.textHeight - 2;
 		text.x = width - 2 - text.textWidth - 2;
 
-		currentLevel += dt;
+		var scale = 1.0;
+		if (!state.hasTreesLeft()) scale = 3.0;
+		currentLevel += dt * scale;
 		currentLevel = Math.min(currentLevel, maxLevel);
 		var wasCritical = isCritical;
 		isCritical = currentLevel / maxLevel > criticalLevel;

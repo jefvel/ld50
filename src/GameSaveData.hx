@@ -7,6 +7,8 @@ import hxd.Save;
  */
 class GameSaveData {
 
+	public var showTutorial = true;
+
 	public function new() {}
 
 	#if debug

@@ -1,5 +1,6 @@
 package gamestates;
 
+import elke.graphics.Sprite;
 import elke.process.Timeout;
 import elke.graphics.Transition;
 import hxd.Event;
@@ -21,6 +22,7 @@ class GameOverState extends GameState {
 	var titleAlpha = new EasedFloat(0, 0.0);
 	var subtitleAlpha = new EasedFloat(0, 0.4);
 	var scoreAlpha = new EasedFloat(0, 0.4);
+	var rankAlpha = new EasedFloat(0, 0.4);
 
 	var timeV = new EasedFloat(0, 1.2);
 	var scoreV = new EasedFloat(0, 1.2);
@@ -29,6 +31,17 @@ class GameOverState extends GameState {
 	var score: Text;
 	var maxUnitWidth = 0.;
 	var canLeave = false;
+	var scoreThresholds = [
+		1000,
+		3000,
+		5000,
+		7000,
+		9000,
+		10000,
+		14000,
+	];
+
+	var rankSprite: Sprite;
 	override function onEnter() {
 		container = new Object(game.s2d);
 		textContainer = new Object(container);
@@ -45,25 +58,43 @@ class GameOverState extends GameState {
 		maxUnitWidth = Math.max(maxUnitWidth, score.calcTextWidth('Final Score'));
 		maxUnitWidth = Math.max(maxUnitWidth, subtitle.calcTextWidth('Survival Time'));
 
+		rankSprite = hxd.Res.img.ranks_tilesheet.toSprite2D(textContainer);
+		rankSprite.originX = rankSprite.originY = 20;
+
+		var index = -1;
+		for (i in 0...scoreThresholds.length) {
+			index ++;
+			if (scoreThresholds[i] > state.score) {
+				break;
+			}
+		}
+
+		rankSprite.animation.currentFrame = index;
+
 		positionTexts();
 
 		new Timeout(0.3, () -> {
 			titleAlpha.value = 1.0;
-			game.sound.playSfx(hxd.Res.sound.gameover);
+			game.sound.playSfx(hxd.Res.sound.gameover, 0.5);
 			new Timeout(0.6, () -> {
 				subtitleAlpha.value = 1;
 
-				game.sound.playSfx(hxd.Res.sound.scorepop);
+				game.sound.playSfx(hxd.Res.sound.scorepop, 0.45);
 				timeV.value = state.gameTime;
 
-				new Timeout(0.4, () -> {
+				new Timeout(0.3, () -> {
 					scoreAlpha.value = 1;
-					game.sound.playSfx(hxd.Res.sound.scorepop);
+					game.sound.playSfx(hxd.Res.sound.scorepop, 0.47);
 					scoreV.value = state.score;
+					new Timeout(1.2, () -> {
+						game.sound.playSfx(hxd.Res.sound.rankshow, 0.47);
+						rankAlpha.value = 1;
 
-					new Timeout(0.6, () -> {
-						canLeave = true;
+						new Timeout(0.3, () -> {
+							canLeave = true;
+						});
 					});
+
 				});
 			});
 		});
@@ -94,6 +125,10 @@ class GameOverState extends GameState {
 		score.x = Math.round(game.s2d.width * 0.5 - (1 - scoreAlpha.value) * 4);
 		score.y = Math.round(subtitle.y + subtitle.textHeight + 8);
 		score.alpha = scoreAlpha.value;
+
+		rankSprite.x = Math.round(game.s2d.width * 0.5 - (1 - rankAlpha.value) * 4);
+		rankSprite.y = Math.round(score.y + score.textHeight + 32 + 20);
+		rankSprite.alpha = rankAlpha.value;
 
 		var b = textContainer.getBounds();
 		textContainer.y = Math.round((game.s2d.height - b.height) * 0.5);
