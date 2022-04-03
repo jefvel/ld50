@@ -115,7 +115,7 @@
 					"ID": "DMG",
 					"Name": "Strength",
 					"Description": "Knocks out baddies more easily",
-					"MaxUpgrades": 1
+					"MaxUpgrades": 2
 				},
 				{
 					"ID": "Capacity",
@@ -134,6 +134,12 @@
 					"Name": "Tree Grower",
 					"Description": "Trees grow fruit faster",
 					"MaxUpgrades": 2
+				},
+				{
+					"ID": "Speed",
+					"Name": "Speed",
+					"Description": "Increases move speed slightly",
+					"MaxUpgrades": 1
 				}
 			],
 			"separators": [],

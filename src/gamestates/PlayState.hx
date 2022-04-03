@@ -195,7 +195,7 @@ class PlayState extends elke.gamestate.GameState {
 			spawnFruit(Math.random() * level.pxWid, Math.random() * level.pxHei, frkinds.randomElement());
 		}
 		*/
-		spawnHelper();
+		// spawnHelper();
 	}
 
 	public function getFruitTile(kind: Data.Fruits) {
@@ -280,7 +280,7 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 	override function onEvent(e:Event) {
-		if (!guy.dead) {
+		if (!guy.dead && !upgrades.shown) {
 			if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
 				startAim();
 			}
@@ -301,33 +301,46 @@ class PlayState extends elke.gamestate.GameState {
 		#end
 	}
 
-	public function onUpgrade(u: Data.Upgrades) {
+	public function onUpgrade(u: Data.Upgrades, level: Int) {
 		if (u.ID == Helper) {
 			spawnHelper();
 		}
 
 		if (u.ID == DMG) {
-			damageMultiplier = 3.;
+			if (level == 1) {
+				damageMultiplier = 1.5;
+			} else if (level == 2) {
+				damageMultiplier = 3.;
+			}
 		}
 
 		if (u.ID == Capacity) {
 			guy.maxFruit += 2;
 		}
 
+		if (u.ID == Farmer) {
+			timePerFruit *= 0.85;
+		}
 
 		closeUpgrades();
-
 	}
 
 	public function showUpgrades() {
 		if (upgrades.shown) return;
+		if(!upgrades.showNewUpgrades()) {
+			return;
+		}
+
+		input.disabled = true;
+
 		paused = true;
-		upgrades.showNewUpgrades();
 		blur.useScreenResolution = true;
 		blurEase.value = 7;
-		container.alpha = 0.7;
+		container.alpha = 0.4;
 		upgrades.onSelect = onUpgrade;
 	}
+
+	public var timePerFruit = 7.0;
 
 	var blurEase = new EasedFloat(0, 0.4);
 	var blur = new h2d.filter.Blur(0, 1, 1);
@@ -337,6 +350,7 @@ class PlayState extends elke.gamestate.GameState {
 		upgrades.close();
 		blurEase.value = 0;
 		container.alpha = 1.0;
+		input.disabled = false;
 	}
 
 	function startAim() {
