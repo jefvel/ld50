@@ -1,0 +1,222 @@
+package entities;
+
+import elke.Game;
+import h3d.Matrix;
+import elke.T;
+import h2d.ScaleGrid;
+import h2d.RenderContext;
+import elke.utils.EasedFloat;
+import h2d.Text;
+import h2d.Object;
+import h2d.Interactive;
+import elke.entity.Entity2D;
+
+class UpgradeButton extends Interactive {
+	var paddingX = 12;
+	var paddingY = 6;
+	var paddingBottom = 8;
+	var title: Text;
+
+	var description: Text;
+	var texts: Object;
+	var frame: ScaleGrid;
+	var onSelect: (Data.Upgrades, UpgradeButton) -> Void;
+	var data: Data.Upgrades;
+	var levelText: Text;
+	var currentLevel = 0;
+
+	var hoverEase = new EasedFloat(0, 0.2);
+	var selectEase = new EasedFloat(0, 0.4);
+	var selected = false;
+	
+	var matrix = new Matrix();
+	var flashEase = new EasedFloat(1, 0.3);
+
+	public function new(?p, data: Data.Upgrades, maxWidth: Int, onSelect: (Data.Upgrades, UpgradeButton) -> Void, currentLevel:Int) {
+		super(maxWidth, 1, p);
+		this.onSelect = onSelect;
+		this.data = data;
+		frame = new ScaleGrid(hxd.Res.img.btnframe.toTile(), 2, 2, 2, 2, this);
+		texts = new Object(this);
+		title = new Text(hxd.Res.fonts.equipmentpro_medium_12.toFont(), texts);
+		levelText = new Text(hxd.Res.fonts.equipmentpro_medium_12.toFont(), texts);
+		levelText.textAlign = Right;
+		levelText.x = maxWidth - paddingX * 2;
+		levelText.alpha = 0.5;
+		title.text = data.Name;
+		texts.x = paddingX;
+		texts.y = paddingY;
+
+		description = new Text(hxd.Res.fonts.marumonica.toFont(), texts);
+		description.maxWidth = maxWidth - paddingX * 2;
+		description.y = title.textHeight + title.y;
+		description.text = data.Description;
+
+		var b = texts.getBounds();
+		this.width = maxWidth;
+		this.height = b.height + paddingY + paddingBottom;
+
+		frame.width = this.width;
+		frame.height = this.height;
+
+		this.onClick = onClickFn;
+		levelText.text = '$currentLevel / ${data.MaxUpgrades}';
+
+		selectEase.easeFunction = T.elasticOut;
+
+		onOver = e -> {
+			if (selected) return;
+			hoverEase.value = -2;
+			Game.instance.sound.playWobble(hxd.Res.sound.tick);
+		}
+
+		onOut = e -> {
+			if (selected) return;
+			hoverEase.value = 0;
+		}
+
+		this.filter = new h2d.filter.ColorMatrix(matrix);
+	}
+
+	function onClickFn(e) {
+		if (selected) return;
+		Game.instance.sound.playWobble(hxd.Res.sound.upgradeselect, 0.5);
+		selected = true;
+		hoverEase.value = 0.;
+		currentLevel ++;
+		levelText.text = '$currentLevel / ${data.MaxUpgrades}';
+		selectEase.value = 6;
+		flashEase.setImmediate(100);
+		flashEase.value = 1.0;
+		onSelect(data, this);
+	}
+
+	override function sync(ctx:RenderContext) {
+		super.sync(ctx);
+		x = Math.round(hoverEase.value + selectEase.value);
+		matrix.identity();
+		var v = flashEase.value;
+		matrix.scale(v, v, v);
+	}
+}
+
+class UpgradeMenu extends Entity2D {
+	public var shown = false;
+
+	var upgradeLevels = new Map<Data.UpgradesKind, Int>();
+	var upgradeButtons = new Array<Interactive>();
+	var upgradesToShow = 3;
+	public var onSelect : (Data.Upgrades, Int) -> Void;
+
+	var container: Object;
+	var title: Text;
+	var upgradesList: Object;
+
+	var alphaTarget = new EasedFloat(0, 0.3);
+
+
+	public function new(?p) {
+		super(p);
+		container = new Object(this);
+		title = new Text(hxd.Res.fonts.gridgazer.toFont(), container);
+		title.text = "Choose Upgrade";
+		title.textAlign = Center;
+		upgradesList = new Object(container);
+	}
+
+	var selected = false;
+	public function showNewUpgrades() {
+		if (shown) return false;
+		selected = false;
+
+		upgradesList.removeChildren();
+
+		var upgrades = Data.upgrades.all.toArrayCopy();
+		upgrades = upgrades.filter(u -> {
+			if (!upgradeLevels.exists(u.ID)) {
+				return true;
+			}
+
+			return upgradeLevels[u.ID] < u.MaxUpgrades;
+		});
+
+		if (upgrades.length == 0) {
+			return false;
+		}
+
+		var maxWidth = Math.round(title.textWidth);
+
+		var bY = 0.;
+		for (i in 0...upgradesToShow) {
+			var t = upgrades.randomElement();
+			if (t == null) break;
+			upgrades.remove(t);
+			var l = !upgradeLevels.exists(t.ID) ? 0 : upgradeLevels[t.ID];
+			var btn = new UpgradeButton(upgradesList, t, maxWidth, selectUpgrade, l);
+			btn.y = bY;
+			bY += btn.height + 4;
+		}
+
+		shown = true;
+		alphaTarget.value = 1;
+
+		Game.instance.sound.playWobble(hxd.Res.sound.upgradeopen, 0.4);
+
+		return true;
+	}
+
+	public function selectUpgrade(u: Data.Upgrades, btn: UpgradeButton) {
+		if (selected) return;
+		if (!upgradeLevels.exists(u.ID)) {
+			upgradeLevels[u.ID] = 0;
+		}
+
+		for (c in upgradesList.children) {
+			if (c != btn) {
+				c.alpha = 0.;
+			}
+		}
+
+		upgradeLevels[u.ID] ++;
+
+
+		selected = true;
+		if (onSelect != null) {
+			onSelect(u, upgradeLevels[u.ID]);
+		}
+	}
+
+	function positionStuff() {
+		var s = getScene();
+		title.x = Math.round(s.width * 0.5);
+		var b = container.getBounds();
+		container.y = Math.round((s.height - b.height) * 0.5);
+
+		var t = title.getBounds();
+
+		upgradesList.x = t.x;
+		upgradesList.y = title.textHeight + 7;
+	}
+
+	override function update(dt:Float) {
+		super.update(dt);
+		positionStuff();
+	}
+
+	public function close() {
+		if (!shown) return;
+		alphaTarget.value = 0;
+		shown = false;
+	}
+
+	override function sync(ctx:RenderContext) {
+		super.sync(ctx);
+		if (shown) {
+			upgradesList.alpha = title.alpha;
+		}
+
+		title.alpha = alphaTarget.value;
+
+		container.visible = title.alpha > 0;
+	}
+}
