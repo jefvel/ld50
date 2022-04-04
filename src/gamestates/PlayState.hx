@@ -143,6 +143,10 @@ class PlayState extends elke.gamestate.GameState {
 			return;
 		}
 
+		var d = GameSaveData.getCurrent();
+		d.playedGames ++;
+		d.save();
+
 		musicChannel.stop();
 
 		var llevl = levels.all_levels.Level_1;

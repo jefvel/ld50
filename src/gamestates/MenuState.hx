@@ -1,5 +1,6 @@
 package gamestates;
 
+import objects.SocialLinks;
 import h2d.Interactive;
 import entities.Toggle;
 import h2d.Text;
@@ -27,6 +28,7 @@ class MenuState extends GameState {
 	var toggle: Toggle;
 
 	public function new(){}
+	var socials: SocialLinks;
 
 	override function onEnter() {
 		super.onEnter();
@@ -41,6 +43,12 @@ class MenuState extends GameState {
 		mask.height = bg.tile.height;
 		game.s2d.filter = null;
 		imgContainer.filter = new h2d.filter.Mask(mask);
+
+		socials = new SocialLinks(container);
+
+		if (GameSaveData.getCurrent().playedGames < 3) {
+			socials.visible = false;
+		}
 
 		var playBtn = new Interactive(mask.width, mask.height, imgContainer);
 		playBtn.onPush = e -> {
@@ -130,6 +138,10 @@ class MenuState extends GameState {
 
 		toggle.x = title.x;
 		toggle.y = title.y - 28;
+
+		var sb = socials.getBounds();
+		socials.x = game.s2d.width - sb.width - 8;
+		socials.y = game.s2d.height - sb.height - 8;
 	}
 
 	override function onEvent(e:Event) {

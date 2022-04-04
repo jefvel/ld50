@@ -95,6 +95,7 @@ class VolcanoCam extends Entity2D {
 	var untilNextLevel = 0;
 
 	var peopleGroup: TileGroup;
+	var personTile : Tile;
 
 	public function new(?s, state) {
 		super(s);
@@ -110,6 +111,8 @@ class VolcanoCam extends Entity2D {
 		bg.animation.currentFrame = 0;
 		volcano = hxd.Res.img.volcano_tilesheet.toSprite2D(cameraContent);
 		volcano.animation.play("idle");
+		personTile = Tile.fromColor(0xffffff, 2, 2);
+		peopleGroup = new TileGroup(personTile, cameraContent);
 
 		frame.x = frame.y = 8;
 		cameraContent.x = frame.x;
@@ -190,20 +193,26 @@ class VolcanoCam extends Entity2D {
 			return;
 		}
 
+		a.launchX = Math.random() * 16 - 8;
 		thingsToEat.push(a);
 	}
 
 	var scoreTimeout = 0.;
+	var launchTime = 0.2;
 	function checkScoreQueue(dt: Float) {
 		scoreTimeout -= dt;
 		if (scoreTimeout > 0) {
 			return;
 		}
 		
-		var a = thingsToEat.shift();
+		var a = thingsToEat[0];
 		if (a == null) {
 			return;
 		}
+
+		if (a.launchProgress < launchTime) return;
+
+		thingsToEat.remove(a);
 
 		state.game.sound.playWobble(hxd.Res.sound.burn);
 		scoreTimeout = 0.2;
@@ -278,6 +287,19 @@ class VolcanoCam extends Entity2D {
 	public function unPauseSounds() {
 		rumbleSound.pause = false;
 	}
+
+	function drawPeople(dt: Float) {
+		peopleGroup.clear();
+
+		for(a in thingsToEat) {
+			a.launchProgress += dt;
+			var r = Math.min(a.launchProgress / launchTime, 1);
+			if (r >= 1) continue;
+			var ry = 80 - (60 * T.sineIn(r));
+			var rx = 64 + T.quintOut(1 - r) * a.launchX;
+			peopleGroup.add(rx, ry, personTile);
+		}
+	}
 	
 	var loseImminent = 1.0;
 	var graceTime = 1.0;
@@ -304,6 +326,8 @@ class VolcanoCam extends Entity2D {
 		}
 		cameraContent.x = frame.x + 4;
 		cameraContent.y = frame.y + 4;
+
+		drawPeople(dt);
 
 		checkScoreQueue(dt);
 

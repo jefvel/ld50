@@ -8,6 +8,7 @@ import hxd.Save;
 class GameSaveData {
 
 	public var showTutorial = true;
+	public var playedGames = 0;
 
 	public function new() {}
 

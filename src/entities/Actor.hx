@@ -22,6 +22,12 @@ class Actor extends WorldObject {
 	public var gravity = 0.5;
 	public var bounciness = 0.3;
 
+	/**
+	 * uhg track catapult length on volcano camera
+	 */
+	public var launchProgress = 0.;
+	public var launchX = 0.;
+
 	public var name = "";
 	public var volcanoValue = 1.;
 	public var score = 100;
