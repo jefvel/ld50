@@ -334,6 +334,9 @@ class PlayState extends elke.gamestate.GameState {
 				closeUpgrades();
 			}
 		}
+		if (e.kind == EKeyDown && e.keyCode == Key.I) {
+			cam.currentLevel = .0;
+		}
 		#end
 	}
 

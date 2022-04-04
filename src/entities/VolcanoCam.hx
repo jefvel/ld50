@@ -69,7 +69,7 @@ class VolcanoCam extends Entity2D {
 
 	public var currentLevel = 0.;
 	//public var maxLevel = 40.0;
-	public var maxLevel = 4.;
+	public var maxLevel = 40.;
 
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
@@ -282,6 +282,10 @@ class VolcanoCam extends Entity2D {
 	var loseImminent = 1.0;
 	var graceTime = 1.0;
 	var previousSecond = 0;
+	var eatScale = 1.;
+	var untilSuperSpeed = 3.;
+	var superSpeedScale = new EasedFloat(1, 0.8);
+	var ffwd = false;
 	override function update(dt:Float) {
 		super.update(dt);
 		if (state.paused) return;
@@ -310,9 +314,22 @@ class VolcanoCam extends Entity2D {
 		text.y = height - text.textHeight - 2;
 		text.x = width - 2 - text.textWidth - 2;
 
-		var scale = 1.0;
-		if (!state.hasTreesLeft()) scale = 3.0;
-		currentLevel += dt * scale;
+		eatScale = 1.0;
+		if (!state.hasTreesLeft() && !ffwd && state.catapult.toCatapult.length == 0) {
+			ffwd = true;
+			superSpeedScale.value = 13.;
+		} else {
+			if (state.hasTreesLeft() || state.catapult.toCatapult.length > 0) {
+				ffwd = false;
+				superSpeedScale.value = 1.;
+			}
+		}
+
+		if (ffwd) {
+			eatScale = superSpeedScale.value;
+		}
+
+		currentLevel += dt * eatScale;//dt * scale;
 		currentLevel = Math.min(currentLevel, maxLevel);
 		var wasCritical = isCritical;
 		isCritical = currentLevel / maxLevel > criticalLevel;
@@ -352,7 +369,7 @@ class VolcanoCam extends Entity2D {
 
 		barFill.scaleX = (currentLevel / maxLevel);
 
-		var timeLeft = Math.round(maxLevel - currentLevel);
+		var timeLeft = Math.round((maxLevel - currentLevel) / eatScale);
 		if (timeLeft < previousSecond) {
 			if (timeLeft <= 5) {
 				playTickTock();

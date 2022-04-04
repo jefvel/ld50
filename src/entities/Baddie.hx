@@ -232,9 +232,13 @@ class Baddie extends Actor {
 		var l = Math.sqrt(dx * dx + dy * dy);
 		dx /= l;
 		dy /= l;
+		var r = radius;
+		if (target.type == Tree) {
+			r += 10;
+		}
 		vx += dx * Math.min(l - radius + 5, moveSpeed);
 		vy += dy * Math.min(l - radius + 5, moveSpeed);
-		if (l < radius) {
+		if (l < r) {
 			if (target.type == Tree) {
 				var t: Tree = cast target;
 				t.shake();

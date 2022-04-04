@@ -3,7 +3,7 @@
 ###
 
 ## Window
--D windowTitle=Game
+-D windowTitle=Volcano Maintenance
 -D windowSize=1280x720
 # Sets the default color of the scene + html background
 -D backgroundColor=#150a1f
