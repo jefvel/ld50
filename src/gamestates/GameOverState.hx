@@ -32,13 +32,12 @@ class GameOverState extends GameState {
 	var maxUnitWidth = 0.;
 	var canLeave = false;
 	var scoreThresholds = [
-		1000,
-		3000,
-		5000,
-		7000,
-		9000,
-		10000,
-		14000,
+		1000, // E
+		3000, // D
+		5000, // C
+		7000, // B
+		10000, // A
+		15000, // S
 	];
 
 	var rankSprite: Sprite;
@@ -61,12 +60,12 @@ class GameOverState extends GameState {
 		rankSprite = hxd.Res.img.ranks_tilesheet.toSprite2D(textContainer);
 		rankSprite.originX = rankSprite.originY = 20;
 
-		var index = -1;
+		var index = 0;
 		for (i in 0...scoreThresholds.length) {
-			index ++;
 			if (scoreThresholds[i] > state.score) {
 				break;
 			}
+			index ++;
 		}
 
 		rankSprite.animation.currentFrame = index;

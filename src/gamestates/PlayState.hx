@@ -1,5 +1,6 @@
 package gamestates;
 
+import elke.graphics.Transition;
 import entities.TutorialSteps;
 import entities.UpgradeMenu;
 import entities.Helper;
@@ -129,6 +130,13 @@ class PlayState extends elke.gamestate.GameState {
 		startGame();
 
 		musicChannel = game.sound.playMusic(hxd.Res.sound.playmusic, musicVol);
+		musicChannel.pause = true;
+		new Timeout(0.7, () -> {
+			if (!leftState) {
+				musicChannel.pause = false;
+			}
+		});
+
 		musicEffect = new hxd.snd.effect.LowPass();
 		musicChannel.addEffect(musicEffect);
 	}
@@ -316,6 +324,23 @@ class PlayState extends elke.gamestate.GameState {
 		objects.remove(a);
 	}
 
+	var isReset = false;
+	function resetGame() {
+		if (isReset) {
+			return;
+		}
+
+		isReset = true;
+
+		if (musicChannel != null) {
+			musicChannel.fadeTo(0, 0.3);
+		}
+
+		Transition.to(() -> {
+			game.states.setState(new PlayState());
+		}, 0.2, 0.3);
+	}
+
 	override function onEvent(e:Event) {
 		if (!guy.dead && !upgrades.shown) {
 			if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
@@ -328,6 +353,10 @@ class PlayState extends elke.gamestate.GameState {
 					tutorial.threwThing = true;
 				}
 			}
+		}
+
+		if (e.kind == EKeyDown && e.keyCode == Key.R) {
+			resetGame();
 		}
 
 		#if debug
@@ -439,12 +468,16 @@ class PlayState extends elke.gamestate.GameState {
 
 	public var time = 0.0;
 	public var gameTime = 0.;
-	public var score = 0;
+	public var score(default, set) = 0;
 	public var smoothedScore = new EasedFloat(0, 0.3);
 
 	public function addScore(score: Int) {
 		this.score += score;
-		smoothedScore.value = this.score;
+	}
+
+	function set_score(s:Int) {
+		smoothedScore.value = s;
+		return this.score = s;
 	}
 
 	var alphaFadeout = 0.8;
@@ -709,9 +742,14 @@ class PlayState extends elke.gamestate.GameState {
 	}
 
 
+	var leftState = false;
 	override function onLeave() {
 		super.onLeave();
+		leftState = true;
 		container.remove();
 		upgrades.remove();
+		if (musicChannel != null) {
+			musicChannel.stop();
+		}
 	}
 }

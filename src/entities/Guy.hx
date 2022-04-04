@@ -91,7 +91,18 @@ class Guy extends Actor {
 			return false;
 		}
 
-		toThrow = heldFruit[0];
+		toThrow = null;
+		for (f in heldFruit) {
+			if (f.type == Baddie) {
+				toThrow = f;
+				break;
+			}
+		}
+
+		if (toThrow == null) {
+			toThrow = heldFruit[0];
+		}
+
 		toThrow.beingThrown = true;
 		aiming = true;
 

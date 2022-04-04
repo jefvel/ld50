@@ -142,18 +142,18 @@ class Joystick extends Entity2D {
 		dot.y = Math.round(dy);
 	}
 
-	var dz = 0.5;
+	var deadZone = 0.2;
 	public function goingLeft() {
-		return active && mx < -dz;
+		return active && mx < -deadZone;
 	}
 	public function goingRight() {
-		return active && mx > dz;
+		return active && mx > deadZone;
 	}
 	public function goingUp() {
-		return active && my < -dz;
+		return active && my < -deadZone;
 	}
 	public function goingDown() {
-		return active && my > dz;
+		return active && my > deadZone;
 	}
 
 	public function end() {
