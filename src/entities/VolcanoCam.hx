@@ -59,6 +59,7 @@ class VolcanoCam extends Entity2D {
 	var height = 80;
 	var text: Text;
 	var etaText: Text;
+
 	var scoreText: Text;
 
 	var timeText: Text;
@@ -75,6 +76,8 @@ class VolcanoCam extends Entity2D {
 	//var criticalLevel = 0.1;
 
 	var lowerInfo: Object;
+	var bottomUi: Object;
+	var barHeight = 8;
 	var bar: Bitmap;
 	var barFill: Bitmap;
 	var bg: Sprite;
@@ -96,6 +99,7 @@ class VolcanoCam extends Entity2D {
 
 	var peopleGroup: TileGroup;
 	var personTile : Tile;
+	var padding = 8;
 
 	public function new(?s, state) {
 		super(s);
@@ -114,7 +118,7 @@ class VolcanoCam extends Entity2D {
 		personTile = Tile.fromColor(0xffffff, 2, 2);
 		peopleGroup = new TileGroup(personTile, cameraContent);
 
-		frame.x = frame.y = 8;
+		frame.x = frame.y = padding;
 		cameraContent.x = frame.x;
 		cameraContent.y = frame.y;
 
@@ -142,10 +146,10 @@ class VolcanoCam extends Entity2D {
 		lowerInfo.x = width + 14 + frame.x;
 		lowerInfo.y = cameraContent.y;
 
-		var barHeight = 8;
-		bar = new Bitmap(Tile.fromColor(0xffffff, width, barHeight), lowerInfo);
+		bottomUi = new Object(this);
 
-		barFill = new Bitmap(Tile.fromColor(0xb42313, Std.int(bar.tile.width), Std.int(bar.tile.height)), bar);
+		bar = new Bitmap(Tile.fromColor(0xffffff), bottomUi);
+		barFill = new Bitmap(Tile.fromColor(0xb42313), bar);
 
 		scoreText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
 		scoreText.x = bar.x;
@@ -157,10 +161,12 @@ class VolcanoCam extends Entity2D {
 			alpha: 1
 		};
 
+		var barY = 0.; // bar.y + barHeight + 2
+
 		// todo add exp bar as bg to score scoreText.textColor = 
 
-		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
-		etaText.y = scoreText.y + scoreText.textHeight * 0.5 + 4;
+		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), bottomUi);
+		etaText.y = 0;//scoreText.y + scoreText.textHeight * 0.5 + 4;
 		etaText.x = bar.x;
 		bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
 		etaText.scale(0.5);
@@ -175,7 +181,7 @@ class VolcanoCam extends Entity2D {
 
 		var scoreTextContainer = new Object(lowerInfo);
 		scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
-		scoreTextContainer.y = bar.y + barHeight + 2;
+		scoreTextContainer.y = barY;
 
 		for (i in 0...maxScoreTexts) {
 			var s = new ScoreAdd("", scoreTextContainer);
@@ -391,7 +397,15 @@ class VolcanoCam extends Entity2D {
 			}
 		}
 
-		barFill.scaleX = (currentLevel / maxLevel);
+		var s = getScene();
+		if (s != null) {
+			var barWidth = s.width - padding * 2;
+			bar.tile.scaleToSize(barWidth, barHeight);
+			barFill.tile.scaleToSize(Math.round((currentLevel / maxLevel) * barWidth), barHeight);
+			var b = bottomUi.getBounds();
+			bottomUi.x = padding;
+			bottomUi.y = s.height - b.height - padding;
+		}
 
 		var timeLeft = Math.round((maxLevel - currentLevel) / eatScale);
 		if (timeLeft < previousSecond) {

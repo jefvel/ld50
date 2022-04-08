@@ -34,7 +34,11 @@ class Fruit extends Actor {
 
 		ripeTime -= dt;
 		if (scale < 1 || ripeTime > 0) {
-			scale = Math.min(1, T.elasticOut(T.quintIn(1 - (ripeTime / maxRipeTime))));
+			var t = Math.min(1 - (ripeTime / maxRipeTime), 1);
+			var s = T.smoothstep(0.94, 1.0, t);
+			scale = 0.75 * T.expoOut(t) + T.elasticOut(s) * 0.3;
+		} else {
+			scale = 1.;
 		}
 
 		if (thrown) {
