@@ -73,6 +73,7 @@ class TutorialSteps extends Object {
 
 		if (currentStep == 2) {
 			if (state.catapult.toCatapult.length > 0) {
+				threwThing = false;
 				return true;
 			}
 		}
@@ -84,13 +85,13 @@ class TutorialSteps extends Object {
 		}
 
 		if (currentStep == 4) {
-			if (minTimePerStep < -2) {
+			if (minTimePerStep < -4) {
 				return true;
 			}
 		}
 
 		if (currentStep == 5) {
-			if (minTimePerStep < -2) {
+			if (minTimePerStep < -4) {
 				return true;
 			}
 		}

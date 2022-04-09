@@ -22,6 +22,8 @@ class ThrowLine extends Object {
 	public var throwX = 0.;
 	public var throwY = 0.;
 
+	public var toThrowSize = 32.;
+
 	public var aimTime = new EasedFloat(0, 0.6);
 
 	public var relativeAim = false;
@@ -72,14 +74,16 @@ class ThrowLine extends Object {
 
 		arrowRotation = Math.atan2(dy, dx);
 
-		r = Math.max(r, 16);
-		r = 16;
+		//r = Math.max(r, 16);
+		r = toThrowSize;
 
 		r *= throwPower;
 
 		graphics.clear();
 		graphics.lineStyle(3, 0xfffdf0);
-		graphics.drawCircle(0, 0, r);
+		graphics.drawPieInner(0, 0, r, r - 1, 0, Math.PI * 2 * throwPower);
+
+		graphics.alpha = throwPower;
 
 		var dx = (Math.cos(arrowRotation));
 		var dy = (Math.sin(arrowRotation));

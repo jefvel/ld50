@@ -1,5 +1,6 @@
 package gamestates;
 
+import h3d.Vector;
 import elke.graphics.Transition;
 import entities.TutorialSteps;
 import entities.UpgradeMenu;
@@ -482,6 +483,18 @@ class PlayState extends elke.gamestate.GameState {
 
 	var alphaFadeout = 0.8;
 
+	var hpBarBgColor = new Vector(1, 1, 1, 0.6);
+	var hpBarColor = Vector.fromColor(0xffb42313);
+	public function renderHpBar(x: Float, y: Float, life: Float, maxLife: Float) {
+		var hpBarWidth = 64;
+		var hpBarHeight = 4;
+		var sx = Math.round(x + -hpBarWidth * 0.5);
+		var sy = Math.round(y - 8);
+		hpBarsGroup.addTransform(sx, sy, hpBarWidth, hpBarHeight, 0, hpBarBgColor, hpBarTile);
+		var l = Math.min(Math.max(0, life) / maxLife, 1.);
+		hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, hpBarColor, hpBarTile);
+	}
+
 	override function tick(dt:Float) {
 		if (game.paused) return;
 		if (paused) return;
@@ -591,14 +604,13 @@ class PlayState extends elke.gamestate.GameState {
 			if (f.type == Fruit) {
 				if (f.thrown && !f.catapulted) {
 					var fmax = f.maxSpeed * 0.5;
-					if (f.vx * f.vx + f.vy * f.vy < fmax * fmax) continue;
 
 					for (b in baddies) {
 						if (b.dead) continue;
 						if (b.held || b.catapulted) continue;
 
 						var dx = b.x - f.x;
-						var dy = b.y - f.y;
+						var dy = (b.y - 8) - f.y;
 						var lsq = dx * dx + dy * dy;
 						var r = f.radius + b.radius;
 						if (lsq < r * r) {
@@ -608,13 +620,21 @@ class PlayState extends elke.gamestate.GameState {
 							var vdst = Math.sqrt(f.vx * f.vx + f.vy * f.vy);
 							var dratio = Math.min(1, vdst / f.maxSpeed + 0.3) * damageMultiplier;
 
-							b.vx += f.vx * 1;
-							b.vy += f.vy * 1;
+							var weakShot = f.vx * f.vx + f.vy * f.vy < fmax * fmax;
+
+							var nx = f.vx;
+							var ny = f.vy;
 
 							f.vx *= -0.2;
 							f.vy *= -0.2;
 							f.x -= dx * 2;
 							f.y -= dy * 2;
+
+							if (weakShot) continue;
+
+							b.vx += nx * 1;
+							b.vy += ny * 1;
+
 							hitWithFruit = true;
 							b.hurt(dratio);
 

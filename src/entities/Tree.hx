@@ -129,16 +129,8 @@ class Tree extends Actor {
 	}
 	override function draw() {
 		super.draw();
-		var bgColor = new Vector(1, 1, 1, 0.6);
-		var color = Vector.fromColor(0xffb42313);
-		var hpBarWidth = 64;
-		var hpBarHeight = 4;
-		var sx = Math.round(x + -hpBarWidth * 0.5 + 2);
-		var sy = Math.round(y + -112 - 8);
 		if (life < maxLife && !dead) {
-			state.hpBarsGroup.addTransform(sx, sy, hpBarWidth, hpBarHeight, 0, bgColor, state.hpBarTile);
-			var l = Math.max(0, life) / maxLife;
-			state.hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, color, state.hpBarTile);
+			state.renderHpBar(x + 2, y - 112, life, maxLife);
 		}
 	}
 }

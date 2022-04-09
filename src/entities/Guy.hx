@@ -106,11 +106,17 @@ class Guy extends Actor {
 		toThrow.beingThrown = true;
 		aiming = true;
 
+		if (toThrow.type == Baddie) {
+			throwLine.toThrowSize = 40;
+		} else {
+			throwLine.toThrowSize = 30;
+		}
+
 		throwLine.active = true;
 
 		state.game.sound.playWobble(hxd.Res.sound.preparethrow, 0.3);
 
-		shaking = true;
+		//shaking = true;
 
 		return true;
 	}
@@ -120,7 +126,7 @@ class Guy extends Actor {
 			return;
 		}
 
-		shaking = false;
+		//shaking = false;
 		toThrow.beingThrown = false;
 
 		toThrow.held = false;

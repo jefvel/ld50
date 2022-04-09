@@ -9,6 +9,8 @@ class Baddie extends Actor {
 
 	public var pickupRadius = 20.;
 
+	var maxLife = 3.;
+
 	public var target: Actor = null;
 	var color = new Vector(1, 1, 1);
 
@@ -30,7 +32,7 @@ class Baddie extends Actor {
 
 		name = "Baddie";
 
-		life = 3.;
+		life = maxLife;
 
 		sprite = hxd.Res.img.baddie_tilesheet.toAnimation();
 		sprite.originX = 32;
@@ -119,7 +121,7 @@ class Baddie extends Actor {
 	public function resetKnockout() {
 		pickupable = false;
 		knockedOut = false;
-		life = 3;
+		life = maxLife;
 	}
 
 	var lastFrame = -1;
@@ -396,5 +398,9 @@ class Baddie extends Actor {
 		color.a = alpha;
 
 		state.actorGroup.addTransform(bx, by, sx, 1, 0, color, t);
+
+		if (life < maxLife && !dead && heldBy == null) {
+			state.renderHpBar(x - 2, y - 64, life, maxLife);
+		}
 	}
 }

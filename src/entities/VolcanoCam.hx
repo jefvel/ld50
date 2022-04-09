@@ -1,5 +1,6 @@
 package entities;
 
+import elke.things.StatusFeed;
 import h2d.TileGroup;
 import h2d.filter.Glow;
 import elke.T;
@@ -61,11 +62,13 @@ class VolcanoCam extends Entity2D {
 	var etaText: Text;
 
 	var scoreText: Text;
+	var scoreBar: ScoreBar;
 
 	var timeText: Text;
 	var timeTextBg: Bitmap;
 
-	var scoreTexts: Array<ScoreAdd> = [];
+	var scoreTexts: Array<Text> = [];
+	var statusFeed: StatusFeed<Text>;
 	var thingsToEat: Array<Actor> = [];
 
 	public var currentLevel = 0.;
@@ -151,6 +154,8 @@ class VolcanoCam extends Entity2D {
 		bar = new Bitmap(Tile.fromColor(0xffffff), bottomUi);
 		barFill = new Bitmap(Tile.fromColor(0xb42313), bar);
 
+		scoreBar = new ScoreBar(lowerInfo);
+
 		scoreText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
 		scoreText.x = bar.x;
 		scoreText.scale(0.5);
@@ -180,11 +185,23 @@ class VolcanoCam extends Entity2D {
 		rumbleSound = state.game.sound.playSfx(hxd.Res.sound.volcanorumbl, 0, true);
 
 		var scoreTextContainer = new Object(lowerInfo);
-		scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
-		scoreTextContainer.y = barY;
+		//scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
+		scoreTextContainer.y = barY + scoreBar.height + 2;
+		statusFeed = new StatusFeed<Text>(scoreTextContainer);
 
 		for (i in 0...maxScoreTexts) {
-			var s = new ScoreAdd("", scoreTextContainer);
+			//var s = new ScoreAdd("", scoreTextContainer);
+			//var s = text = new Text(hxd.Res.fonts.futilepro_medium_12.toFont());
+			var s = new Text(hxd.Res.fonts.gridgazer.toFont());
+			s.scale(0.5);
+			s.dropShadow = {
+				color: 0x150a1f,
+				dx: 2,
+				dy: 2,
+				alpha: 1
+			};
+			//text.text = label;
+			text.textColor = 0xfffdf0;
 			scoreTexts.push(s);
 		}
 	}
@@ -193,7 +210,7 @@ class VolcanoCam extends Entity2D {
 
 	var isMooding = false;
 	var scoreIndex = 0;
-	var maxScoreTexts = 15;
+	var maxScoreTexts = 25;
 	public function feed(a: Actor) {
 		if (state.lost) {
 			return;
@@ -233,7 +250,8 @@ class VolcanoCam extends Entity2D {
 		var s = scoreTexts[scoreIndex];
 		scoreIndex ++;
 		scoreIndex %= scoreTexts.length;
-		s.show('-${a.volcanoValue.toMoneyStringFloat()}s ${a.name}');
+		s.text = '-${a.volcanoValue.toMoneyStringFloat()}s ${a.name}';
+		statusFeed.add(s);
 	}
 
 	function resetVolcanoMood(_) {
@@ -433,10 +451,20 @@ class VolcanoCam extends Entity2D {
 		}
 
 		if (hasUpgrades) {
+			scoreBar.levelScore = untilNextLevel;
+		} else {
+			scoreBar.levelScore = 0;
+		}
+
+		scoreBar.score = state.score;
+
+		/*
+		if (hasUpgrades) {
 			scoreText.text = '${scr.toMoneyString()} / $untilNext';
 		} else {
 			scoreText.text = '${scr.toMoneyString()}';
 		}
+		*/
 	}
 
 	public var hasUpgrades = true;
