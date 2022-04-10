@@ -1,5 +1,6 @@
 package gamestates;
 
+import h2d.col.Point;
 import h3d.Vector;
 import elke.graphics.Transition;
 import entities.TutorialSteps;
@@ -44,8 +45,14 @@ class PlayState extends elke.gamestate.GameState {
 	var shadowGroup: TileGroup;
 	public var actorGroup: TileGroup;
 
-	public var hpBarTile: Tile;
+	var hpBarBgTile: Tile;
+	var hpBarTile: Tile;
+	var warningLeftTile: Tile;
+	var warningRightTile: Tile;
+	var warningUpTile: Tile;
+	var warningDownTile: Tile;
 	public var hpBarsGroup: TileGroup;
+	var warningsGroup: TileGroup;
 
 	public var actors: Array<Actor> = [];
 	public var objects: Array<WorldObject> = [];
@@ -117,18 +124,41 @@ class PlayState extends elke.gamestate.GameState {
 		actorGroup = new TileGroup(atlas.atlasTile, world);
 		foreground = new Object(world);
 
-		hpBarTile = Tile.fromColor(0xffffff);
-		hpBarsGroup = new TileGroup(hpBarTile, foreground);
+		var overlay = hxd.Res.img.overlayelements.toTile();
+		hpBarTile = overlay.sub(0, 0, 1, 1);
+		hpBarBgTile = overlay.sub(0, 2, 1, 1);
+
+		warningLeftTile = overlay.sub(0, 16, 16, 16);
+		warningLeftTile.dx = 4;
+		warningLeftTile.dy = -8;
+
+		warningRightTile = overlay.sub(16, 16, 16, 16);
+		warningRightTile.dx = -20;
+		warningRightTile.dy = -8;
+
+		warningUpTile = overlay.sub(32, 16, 16, 16);
+		warningUpTile.dx = -8;
+		warningUpTile.dy = 4;
+
+		warningDownTile = overlay.sub(48, 16, 16, 16);
+		warningDownTile.dx = -8;
+		warningDownTile.dy = -20;
+
+		hpBarsGroup = new TileGroup(overlay, foreground);
 
 		game.s2d.filter = null;
 
 		uiContainer = new Object(container);
+
+
 		input = new BasicInput(game, container);
 
 		world.filter = new h2d.filter.ColorMatrix(colorMatrix);
 		world.filter.useScreenResolution = false;
 
 		startGame();
+
+		warningsGroup = new TileGroup(overlay, uiContainer);
 
 		musicChannel = game.sound.playMusic(hxd.Res.sound.playmusic, musicVol);
 		musicChannel.pause = true;
@@ -414,13 +444,19 @@ class PlayState extends elke.gamestate.GameState {
 		closeUpgrades();
 	}
 
-	public function showUpgrades() {
-		if (upgrades.shown) return;
+	var upgradesCallback: Void -> Void;
+	public function showUpgrades(?onFinish: Void -> Void) {
+		if (upgrades.shown) {
+			if (onFinish != null) onFinish();
+			return;
+		}
 		if(!upgrades.showNewUpgrades()) {
+			if (onFinish != null) onFinish();
 			return;
 		}
 
 		input.disabled = true;
+		upgradesCallback = onFinish;
 
 		if (!isCritical) {
 			musicEffect.gainHF = 0.5;
@@ -445,6 +481,9 @@ class PlayState extends elke.gamestate.GameState {
 	var blur = new h2d.filter.Blur(0, 1, 1);
 	public function closeUpgrades() {
 		if (!upgrades.shown) return;
+
+		if (upgradesCallback != null) upgradesCallback();
+
 		paused = false;
 		upgrades.close();
 		blurEase.value = 0;
@@ -483,16 +522,45 @@ class PlayState extends elke.gamestate.GameState {
 
 	var alphaFadeout = 0.8;
 
-	var hpBarBgColor = new Vector(1, 1, 1, 0.6);
-	var hpBarColor = Vector.fromColor(0xffb42313);
 	public function renderHpBar(x: Float, y: Float, life: Float, maxLife: Float) {
 		var hpBarWidth = 64;
 		var hpBarHeight = 4;
 		var sx = Math.round(x + -hpBarWidth * 0.5);
 		var sy = Math.round(y - 8);
-		hpBarsGroup.addTransform(sx, sy, hpBarWidth, hpBarHeight, 0, hpBarBgColor, hpBarTile);
+		//sx += Std.int(world.x);
+		//sy += Std.int(world.y);
+		hpBarsGroup.addTransform(sx, sy, hpBarWidth, hpBarHeight, 0, hpBarBgTile);
 		var l = Math.min(Math.max(0, life) / maxLife, 1.);
-		hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, hpBarColor, hpBarTile);
+		hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, hpBarTile);
+	}
+
+	public function renderWarning(x: Float, y: Float) {
+		var p = world.localToGlobal(new Point(x, y));
+		var renderDx = 0.;
+
+		var horizontal = true;
+		renderDx = x - guy.x;
+		var t = renderDx > 0 ? warningRightTile : warningLeftTile;
+		if (p.x > 0 && p.x < game.s2d.width) {
+			horizontal = false;
+			if (y - guy.y < 0) {
+				t = warningUpTile;
+			} else {
+				t = warningDownTile;
+			}
+			if (p.y > 0 && p.y < game.s2d.height) {
+				return;
+			}
+		}
+
+
+
+
+
+		p.x = Math.max(0, Math.min(game.s2d.width, p.x));
+		p.y = Math.max(32, Math.min(game.s2d.height - 40, p.y));
+
+		warningsGroup.add(p.x, p.y, t);
 	}
 
 	override function tick(dt:Float) {
@@ -706,6 +774,7 @@ class PlayState extends elke.gamestate.GameState {
 			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadow);
 		}
 
+		warningsGroup.clear();
 		hpBarsGroup.clear();
 		actorGroup.clear();
 		for (a in objects) {
@@ -718,8 +787,11 @@ class PlayState extends elke.gamestate.GameState {
 	var endShake = new EasedFloat(0, 0.5);
 
 	function positionWorld(){
-		world.x = Math.round(-guy.x * world.scaleX + game.s2d.width * 0.5);
-		world.y = Math.round(-guy.y * world.scaleY + game.s2d.height * 0.5);
+		inline function round(f) {
+			return (f);
+		}
+		world.x = round(-guy.x * world.scaleX + game.s2d.width * 0.5);
+		world.y = round(-guy.y * world.scaleY + game.s2d.height * 0.5);
 
 		world.x = Math.min(0, world.x);
 		world.y = Math.min(0, world.y);
@@ -732,25 +804,25 @@ class PlayState extends elke.gamestate.GameState {
 
 
 		if (scaledWidth < game.s2d.width) {
-			world.x = Math.round((game.s2d.width - scaledWidth) * 0.5);
+			world.x = round((game.s2d.width - scaledWidth) * 0.5);
 		}
 
 		if (scaledHeight < game.s2d.height) {
-			world.y = Math.round((game.s2d.height - scaledHeight) * 0.5);
+			world.y = round((game.s2d.height - scaledHeight) * 0.5);
 		}
 
 		if (tutorial != null) {
 			tutorial.updatePos();
 		}
 
-		world.x = Math.round(world.x + Math.sin(time * 60) * criticalFade.value * 1);
-		world.y = Math.round(world.y);
+		world.x = round(world.x + Math.sin(time * 60) * criticalFade.value * 1);
+		world.y = round(world.y);
 		if (endShake.value > 0) {
 			world.x += Math.cos(time * 50) * endShake.value * 3;
 			world.y += Math.sin(time * 53) * endShake.value * 3;
 		}
 
-		world.y -= Math.round(scrollInVal.value);
+		world.y -= round(scrollInVal.value);
 
 		colorMatrix.identity();
 		var v = criticalFade.value;

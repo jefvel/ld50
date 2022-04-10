@@ -1,5 +1,6 @@
 package entities;
 
+import elke.T;
 import h2d.Tile;
 import h2d.Bitmap;
 import h2d.ScaleGrid;
@@ -9,28 +10,11 @@ import h2d.Text;
 import h2d.Object;
 
 class ScoreBar extends Object {
-	var easedScore = new EasedFloat(0);
+	var easedScore = new EasedFloat(0, 0.3);
+	var easedScale = new EasedFloat(0, 0.4);
 	public var score(default, set) = 0;
  	var previousLevelScore = 0;
-
 	public var levelScore(default, set) = 0;
-	function set_levelScore(s) {
-		if (s > levelScore) {
-			previousLevelScore = levelScore;
-		}
-
-		return levelScore = s;
-	}
-
-
-	function set_score(s:Int) {
-		if (score != s) {
-			easedScore.value = s;
-		}
-
-		return score = s;
-	}
-
 	public var width = 128.;
 	public var height = 24.;
 
@@ -41,6 +25,8 @@ class ScoreBar extends Object {
 	var paddingY = 5;
 
 	var bar: Bitmap;
+
+	public var levellingUp = false;
 
 	public function new(?p) {
 		super(p);
@@ -64,29 +50,65 @@ class ScoreBar extends Object {
 		label.text = "0 / 500";
 		var b = label.getBounds();
 		label.y = Math.round(((height - paddingY * 2) - b.height) * 0.5 + paddingY);
+
+		easedScale.easeFunction = T.elasticOut;
 	}
 
 	override function sync(ctx:RenderContext) {
 		super.sync(ctx);
 		var untilNext = levelScore.toMoneyString();
-		var scr = Math.round(easedScore.value);
+		var scr = Math.round(Math.min(easedScore.value, levelScore));
 
 		if (levelScore > 0) {
 			scr = Std.int(Math.min(levelScore, scr));
 			label.text = '${scr.toMoneyString()} / $untilNext';
 			bar.visible = true;
-			var d = levelScore - previousLevelScore;
-			var ds = scr - previousLevelScore;
-			var s = Math.min(1, Math.max(0, ds));
 			var p = 1;
-			var w = Math.round(s * (width - p * 2 - 1));
 			var h = height - p * 2;
+			var w = Math.max(0, Math.min(width - p * 2, easedScale.value));
+			if (levellingUp) {
+				w = width - p * 2;
+			}
 			bar.tile.scaleToSize(w, h);
-			bar.x = p;
-			bar.y = p;
 		} else {
 			label.text = '${scr.toMoneyString()}';
 			bar.visible = false;
 		}
+	}
+
+	function updateScale() {
+		var scr = score;
+		if (levelScore > 0) {
+			//scr = Std.int(Math.min(levelScore, score));
+		}
+
+		var d = levelScore - previousLevelScore;
+		var ds = scr - previousLevelScore;
+		var s = Math.min(1, Math.max(0, ds / d));
+		var p = 1;
+		var w = Math.round(s * (width - p * 2 - 1));
+
+		bar.x = p;
+		bar.y = p;
+
+		easedScale.value = w;
+	}
+
+	function set_levelScore(s: Int) {
+		if (s > levelScore) {
+			previousLevelScore = levelScore;
+			easedScale.setImmediate(0);
+		}
+
+		return levelScore = s;
+	}
+
+	function set_score(s:Int) {
+		if (score != s) {
+			easedScore.value = s;
+			updateScale();
+		}
+
+		return score = s;
 	}
 }

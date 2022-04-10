@@ -402,5 +402,7 @@ class Baddie extends Actor {
 		if (life < maxLife && !dead && heldBy == null) {
 			state.renderHpBar(x - 2, y - 64, life, maxLife);
 		}
+
+		state.renderWarning(x, y - 32);
 	}
 }

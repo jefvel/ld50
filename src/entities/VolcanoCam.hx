@@ -61,7 +61,6 @@ class VolcanoCam extends Entity2D {
 	var text: Text;
 	var etaText: Text;
 
-	var scoreText: Text;
 	var scoreBar: ScoreBar;
 
 	var timeText: Text;
@@ -156,22 +155,10 @@ class VolcanoCam extends Entity2D {
 
 		scoreBar = new ScoreBar(lowerInfo);
 
-		scoreText = new Text(hxd.Res.fonts.gridgazer.toFont(), lowerInfo);
-		scoreText.x = bar.x;
-		scoreText.scale(0.5);
-		scoreText.dropShadow = {
-			color: 0x150a1f,
-			dx: 2,
-			dy: 2,
-			alpha: 1
-		};
-
 		var barY = 0.; // bar.y + barHeight + 2
 
-		// todo add exp bar as bg to score scoreText.textColor = 
-
 		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), bottomUi);
-		etaText.y = 0;//scoreText.y + scoreText.textHeight * 0.5 + 4;
+		etaText.y = 0;
 		etaText.x = bar.x;
 		bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
 		etaText.scale(0.5);
@@ -190,8 +177,6 @@ class VolcanoCam extends Entity2D {
 		statusFeed = new StatusFeed<Text>(scoreTextContainer);
 
 		for (i in 0...maxScoreTexts) {
-			//var s = new ScoreAdd("", scoreTextContainer);
-			//var s = text = new Text(hxd.Res.fonts.futilepro_medium_12.toFont());
 			var s = new Text(hxd.Res.fonts.gridgazer.toFont());
 			s.scale(0.5);
 			s.dropShadow = {
@@ -441,13 +426,8 @@ class VolcanoCam extends Entity2D {
 			etaText.text = 'ERUPTION IMMINENT';
 		}
 
-		var untilNext = untilNextLevel.toMoneyString();
-		var scr = Math.round(state.smoothedScore.value);
-		if (!state.lost && hasUpgrades) {
-			if (state.score > untilNextLevel) {
-				scr = untilNextLevel;
-				levelUp();
-			}
+		if (state.upgrades.shown) {
+			return;
 		}
 
 		if (hasUpgrades) {
@@ -456,28 +436,29 @@ class VolcanoCam extends Entity2D {
 			scoreBar.levelScore = 0;
 		}
 
-		scoreBar.score = state.score;
-
-		/*
-		if (hasUpgrades) {
-			scoreText.text = '${scr.toMoneyString()} / $untilNext';
-		} else {
-			scoreText.text = '${scr.toMoneyString()}';
+		var scr = Math.round(state.smoothedScore.value);
+		if (!state.lost && hasUpgrades) {
+			if (state.score > untilNextLevel) {
+				scr = untilNextLevel;
+				levelUp();
+			}
 		}
-		*/
+
+		scoreBar.score = state.score;
 	}
 
 	public var hasUpgrades = true;
 
 	function levelUp() {
-		currentUpgradeLevel ++;
-		if (currentUpgradeLevel >= upgradeLevels.length) {
-			untilNextLevel = Math.round(untilNextLevel * 1.2);
-		} else {
-			untilNextLevel = upgradeLevels[currentUpgradeLevel];
-		}
-
-		state.showUpgrades();
-
+		scoreBar.levellingUp = true;
+		state.showUpgrades(() -> {
+			currentUpgradeLevel ++;
+			if (currentUpgradeLevel >= upgradeLevels.length) {
+				untilNextLevel = Math.round(untilNextLevel * 1.2);
+			} else {
+				untilNextLevel = upgradeLevels[currentUpgradeLevel];
+			}
+			scoreBar.levellingUp = false;
+		});
 	}
 }
