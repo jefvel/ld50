@@ -7,7 +7,7 @@ import h2d.RenderContext;
 class StatusFeed<T: h2d.Object> extends h2d.Object {
 	var items: Array<T> = [];
 
-	public var minDisplayTime = 0.4;
+	public var minDisplayTime = 0.3;
 	public var maxDisplayTime = 1.2;
 
 	public var travelTime = 0.3;

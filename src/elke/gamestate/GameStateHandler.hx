@@ -10,7 +10,7 @@ class GameStateHandler {
 		return instance;
 	}
 
-	var currentState:GameState;
+	public var currentState:GameState;
 
 	var game:Game;
 

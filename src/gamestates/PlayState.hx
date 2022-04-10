@@ -214,7 +214,9 @@ class PlayState extends elke.gamestate.GameState {
 		gameoverShown = true;
 		cam.fadeOutSound();
 		new Timeout(2.6, () -> {
-			game.states.setState(new GameOverState(this));
+			if (game.states.currentState == this) {
+				game.states.setState(new GameOverState(this));
+			}
 		});
 	}
 
@@ -702,9 +704,10 @@ class PlayState extends elke.gamestate.GameState {
 							b.vy += ny * 1;
 
 							hitWithFruit = true;
-							b.hurt(dratio);
-
 							addScore(10);
+							cam.addStatus('+10 Hit');
+
+							b.hurt(dratio);
 						}
 					}
 				}

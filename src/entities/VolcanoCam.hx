@@ -110,9 +110,9 @@ class VolcanoCam extends Entity2D {
 		untilNextLevel = upgradeLevels[0];
 
 		cameraContent = new Object(this);
-		frame = new ScaleGrid(hxd.Res.img.cameraframe.toTile(), 5, 5, 5, 5, this);
-		frame.width = width + 8;
-		frame.height = height + 8;
+		frame = new ScaleGrid(hxd.Res.img.cameraframe.toTile(), 3, 3, 4, 4, this);
+		frame.width = width + frame.borderLeft + frame.borderRight - 2;
+		frame.height = height + frame.borderTop + frame.borderBottom - 2;
 		bg = hxd.Res.img.cambg_tilesheet.toSprite2D(cameraContent);
 		bg.animation.currentFrame = 0;
 		volcano = hxd.Res.img.volcano_tilesheet.toSprite2D(cameraContent);
@@ -145,7 +145,7 @@ class VolcanoCam extends Entity2D {
 		timeTextBg.alpha = 0.2;
 
 		lowerInfo = new Object(this);
-		lowerInfo.x = width + 14 + frame.x;
+		lowerInfo.x = width + 12 + frame.x;
 		lowerInfo.y = cameraContent.y;
 
 		bottomUi = new Object(this);
@@ -232,10 +232,14 @@ class VolcanoCam extends Entity2D {
 
 		state.addScore(a.score);
 
+		addStatus('+${a.score.toMoneyString()} ${a.name}');
+	}
+
+	public function addStatus(status: String) {
 		var s = scoreTexts[scoreIndex];
 		scoreIndex ++;
 		scoreIndex %= scoreTexts.length;
-		s.text = '-${a.volcanoValue.toMoneyStringFloat()}s ${a.name}';
+		s.text = status;
 		statusFeed.add(s);
 	}
 
@@ -333,8 +337,8 @@ class VolcanoCam extends Entity2D {
 			//lowerInfo.x = width + 14 + frame.x;
 			//lowerInfo.y = frame.y;
 		}
-		cameraContent.x = frame.x + 4;
-		cameraContent.y = frame.y + 4;
+		cameraContent.x = frame.x + frame.borderLeft - 1;
+		cameraContent.y = frame.y + frame.borderTop - 1;
 
 		drawPeople(dt);
 

@@ -46,7 +46,7 @@ class Baddie extends Actor {
 
 		customShadow = state.baddieShadowTile;
 
-		edgePadding = 32.;
+		edgePadding = 16.;
 
 		type = Baddie;
 	}
@@ -108,7 +108,11 @@ class Baddie extends Actor {
 	override function kill() {
 		if (dead) return;
 		dead = true;
-		state.addScore(Math.round(score * 0.5));
+		var s = Math.round(score * 0.5);
+		state.addScore(s);
+
+		state.cam.addStatus('+${s.toMoneyString()} Kill');
+
 		sprite.play("dead", false, true, 0, finishDead);
 	}
 

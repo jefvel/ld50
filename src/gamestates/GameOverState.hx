@@ -25,7 +25,7 @@ class GameOverState extends GameState {
 	var rankAlpha = new EasedFloat(0, 0.4);
 
 	var timeV = new EasedFloat(0, 1.2);
-	var scoreV = new EasedFloat(0, 1.2);
+	var scoreV = new EasedFloat(0, 1.0);
 
 	var subtitle: Text;
 	var score: Text;
