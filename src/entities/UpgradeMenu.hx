@@ -1,5 +1,6 @@
 package entities;
 
+import elke.process.Timeout;
 import elke.Game;
 import h3d.Matrix;
 import elke.T;
@@ -21,6 +22,7 @@ class UpgradeButton extends Interactive {
 	var texts: Object;
 	var frame: ScaleGrid;
 	var onSelect: (Data.Upgrades, UpgradeButton) -> Void;
+	public var onHover: () -> Void;
 	var data: Data.Upgrades;
 	var levelText: Text;
 	var currentLevel = 0;
@@ -31,6 +33,8 @@ class UpgradeButton extends Interactive {
 	
 	var matrix = new Matrix();
 	var flashEase = new EasedFloat(1, 0.3);
+
+	public var disabled = true;
 
 	public function new(?p, data: Data.Upgrades, maxWidth: Int, onSelect: (Data.Upgrades, UpgradeButton) -> Void, currentLevel:Int) {
 		super(maxWidth, 1, p);
@@ -70,6 +74,7 @@ class UpgradeButton extends Interactive {
 
 		onOver = e -> {
 			alpha = 1.0;
+			if (onHover != null && e != null) onHover();
 			Game.instance.sound.playSfx(hxd.Res.sound.buttonhover, 0.1);
 		}
 
@@ -93,6 +98,7 @@ class UpgradeButton extends Interactive {
 
 	function onClickFn(e) {
 		if (selected) return;
+		if (disabled) return;
 		Game.instance.sound.playWobble(hxd.Res.sound.upgradeselect, 0.5);
 		selected = true;
 		hoverEase.value = 0.;
@@ -117,7 +123,7 @@ class UpgradeMenu extends Entity2D {
 	public var shown = false;
 
 	var upgradeLevels = new Map<Data.UpgradesKind, Int>();
-	var upgradeButtons = new Array<Interactive>();
+	var upgradeButtons = new Array<UpgradeButton>();
 	var upgradesToShow = 3;
 	public var onSelect : (Data.Upgrades, Int) -> Void;
 
@@ -127,6 +133,8 @@ class UpgradeMenu extends Entity2D {
 
 	var alphaTarget = new EasedFloat(0, 0.3);
 
+
+	var selectedIndex = 0;
 
 	public function new(?p) {
 		super(p);
@@ -158,6 +166,8 @@ class UpgradeMenu extends Entity2D {
 		}
 
 		var maxWidth = Math.round(title.textWidth);
+		selectedIndex = 0;
+		upgradeButtons = [];
 
 		var bY = 0.;
 		for (i in 0...upgradesToShow) {
@@ -166,14 +176,25 @@ class UpgradeMenu extends Entity2D {
 			upgrades.remove(t);
 			var l = !upgradeLevels.exists(t.ID) ? 0 : upgradeLevels[t.ID];
 			var btn = new UpgradeButton(upgradesList, t, maxWidth, selectUpgrade, l);
+			btn.onHover = () -> {
+				selectIndex(i);
+			}
 			btn.y = bY;
 			bY += btn.height + 4;
+			upgradeButtons.push(btn);
 		}
 
 		shown = true;
 		alphaTarget.value = 1;
 
 		Game.instance.sound.playWobble(hxd.Res.sound.upgradeopen, 0.4);
+
+		if (Game.instance.inputMethod == Gamepad) {
+			selectIndex(0);
+		}
+		new Timeout(0.5, () -> {
+			for (b in upgradeButtons) b.disabled = false;
+		});
 
 		return true;
 	}
@@ -197,14 +218,16 @@ class UpgradeMenu extends Entity2D {
 			upgradeLevels[u.ID] = 0;
 		}
 
-		for (c in upgradesList.children) {
+
+		for (c in upgradeButtons) {
 			if (c != btn) {
 				c.alpha = 0.;
 			}
+			c.onOver = c.onOut = c.onClick = c.onPush = e -> {};
 		}
 
+		btn.alpha = 1.0;
 		upgradeLevels[u.ID] ++;
-
 
 		selected = true;
 		if (onSelect != null) {
@@ -224,9 +247,51 @@ class UpgradeMenu extends Entity2D {
 		upgradesList.y = title.textHeight + 7;
 	}
 
+	function selectPrevious() {
+		var i = selectedIndex - 1;
+		if (i < 0) i = upgradeButtons.length - 1;
+		selectIndex(i);
+	}
+
+	function selectNext() {
+		var i = selectedIndex + 1;
+		if (i >= upgradeButtons.length) i = 0;
+		selectIndex(i);
+	}
+
+	function selectIndex(i) {
+		upgradeButtons[selectedIndex].onOut(null);
+		upgradeButtons[i].onOver(null);
+		selectedIndex = i;
+	}
+
+	var nonePressed = true;
+	var confirmPressed = true;
 	override function update(dt:Float) {
 		super.update(dt);
 		positionStuff();
+		if (shown) {
+			var s = Game.instance;
+			if (s.gamepads.pressingUp()) {
+				if (nonePressed) {
+					selectPrevious();
+				}
+				nonePressed = false;
+			} else if (s.gamepads.pressingDown()) {
+				if (nonePressed) {
+					selectNext();
+				}
+				nonePressed = false;
+			} else {
+				nonePressed = true;
+			}
+
+			if (!confirmPressed && s.gamepads.pressingConfirm()) {
+				upgradeButtons[selectedIndex].onClick(null);
+			} else if (!s.gamepads.pressingConfirm()) {
+				confirmPressed = false;
+			}
+		}
 	}
 
 	public function close() {

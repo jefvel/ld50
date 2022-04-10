@@ -342,11 +342,13 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		if (wave > 11) {
-			baddieSpawnInterval = 14;
+			baddieSpawnInterval = 15;
 		}
 
-		if (wave > 15) {
-			spawnCount ++;
+		if (wave > 19) {
+			if (wave % 2 == 1) {
+				spawnCount ++;
+			}
 		}
 
 		for (_ in 0...spawnCount) {
@@ -502,6 +504,7 @@ class PlayState extends elke.gamestate.GameState {
 			return;
 		}
 
+		triggerDown = false;
 		input.disabled = true;
 		upgradesCallback = onFinish;
 
@@ -610,6 +613,8 @@ class PlayState extends elke.gamestate.GameState {
 		warningsGroup.add(p.x, p.y, t);
 	}
 
+	var triggerDown = false;
+
 	override function tick(dt:Float) {
 		if (game.paused) return;
 		if (paused) return;
@@ -623,6 +628,18 @@ class PlayState extends elke.gamestate.GameState {
 		time += dt;
 		if (!lost) {
 			gameTime += dt;
+		}
+
+		if (!triggerDown) {
+			if (input.triggerPressed() || input.confirmPressed()) {
+				triggerDown = true;
+				startAim();
+			}
+		} else {
+			if (!input.triggerPressed() && !input.confirmPressed()) {
+				finishAim();
+				triggerDown = false;
+			}
 		}
 
 		checkWave(dt);

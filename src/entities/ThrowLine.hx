@@ -1,5 +1,6 @@
 package entities;
 
+import elke.T;
 import gamestates.PlayState;
 import elke.utils.EasedFloat;
 import h2d.col.Point;
@@ -30,6 +31,8 @@ class ThrowLine extends Object {
 
 	var targetAlpha = new EasedFloat(0, 0.2);
 
+	public var autoAim = false;
+
 	var state: PlayState;
 	public function new(?p, s) {
 		super(p);
@@ -40,6 +43,10 @@ class ThrowLine extends Object {
 		filter = new h2d.filter.Glow(0x150a1f, 1, 2, 0.5);
 	}
 
+	public var toThrow: Actor = null;
+
+	public var lastDY = 0.;
+	public var lastDX = 0.;
 	override function sync(ctx:RenderContext) {
 		super.sync(ctx);
 		alpha = targetAlpha.value * aimTime.value;
@@ -52,13 +59,83 @@ class ThrowLine extends Object {
 			return;
 		}
 
-		var s = getScene();
-		var p = localToGlobal();
-		var dx = s.mouseX - p.x;
-		var dy = s.mouseY - p.y;
-		if (relativeAim) {
-			dx = startX - s.mouseX;
-			dy = startY - s.mouseY;
+		var dx = 0.;
+		var dy = 0.;
+
+		if (state.game.inputMethod == KeyboardAndMouse) {
+			var s = getScene();
+			var p = localToGlobal();
+			dx = s.mouseX - p.x;
+			dy = s.mouseY - p.y;
+			if (relativeAim) {
+				dx = startX - s.mouseX;
+				dy = startY - s.mouseY;
+			}
+		}
+
+		if (state.game.inputMethod == Gamepad) {
+			autoAim = true;
+			var rx = state.game.gamepads.getRightStickX();
+			var ry = state.game.gamepads.getRightStickY();
+			if (rx * rx + ry * ry > 0.6 * 0.6) {
+				dx = rx;
+				dy = ry;
+				lastDX = rx;
+				lastDY = ry;
+			} else {
+				dx = lastDX;
+				dy = lastDY;
+			}
+		}
+
+		if (state.game.inputMethod == Touch) {
+			autoAim = true;
+			var rx = state.guy.vx;
+			var ry = state.guy.vy;
+			if (rx * rx + ry * ry > 0.2 * 0.2) {
+				dx = rx;
+				dy = ry;
+				lastDX = rx;
+				lastDY = ry;
+			} else {
+				dx = lastDX;
+				dy = lastDY;
+			}
+		}
+
+		if (autoAim) {
+			var target: Actor = null;
+			var closest = Math.POSITIVE_INFINITY;
+			inline function tryTarget(t: Actor) {
+				var _dx = t.x - state.guy.x;
+				var _dy = t.y - state.guy.y;
+				var dot = _dx * dx + _dy * dy;
+				if (dot > 0) {
+					var l = Math.sqrt(_dx * _dx + _dy * _dy);
+					_dx /= l;
+					_dy /= l;
+					dot = _dx * dx + _dy * dy;
+
+					var rr = l * 0.001 + (1 - dot);
+					if (rr < closest) {
+						closest = rr;
+						target = t;
+					}
+				}
+			}
+
+			if (toThrow.type == Fruit) {
+				for (a in state.baddies) {
+					tryTarget(a);
+				}
+			}
+
+			tryTarget(state.catapult);
+
+			if (target != null) {
+				dx = target.x - state.guy.x;
+				dy = target.y - state.guy.y;
+			}
 		}
 
 		var p = parent.globalToLocal(new Point(startX, startY));
@@ -97,7 +174,6 @@ class ThrowLine extends Object {
 		arrow.rotation = arrowRotation;
 		arrow.x = dx * r;
 		arrow.y = dy * r;
-
 	}
 
 	function set_active(a) {

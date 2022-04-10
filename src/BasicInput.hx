@@ -74,6 +74,12 @@ class BasicInput extends Object {
 		return downPressed() || ctrlDown;
 	}
 
+	public function triggerPressed() {
+		if (disabled) return false;
+		var pads = game.gamepads;
+		return pads.isBtnDown(BTNS.RT);
+	}
+
 	public function rightPressed() {
 		var pads = game.gamepads;
 		var press = pads.isBtnDown(BTNS.dpadRight) || pads.getStickX() > 0.5;

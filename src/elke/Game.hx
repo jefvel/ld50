@@ -362,6 +362,7 @@ class Game extends hxd.App {
 		var timeUntilTick = Math.max(tickTime - timeAccumulator, 0);
 
 		states.update(dt, timeUntilTick);
+		timeAccumulator = Math.min(timeAccumulator, 5.);
 
 		while (timeAccumulator > tickTime * timeScale && maxTicksPerUpdate > 0) {
 

@@ -57,7 +57,11 @@ class ScoreBar extends Object {
 	override function sync(ctx:RenderContext) {
 		super.sync(ctx);
 		var untilNext = levelScore.toMoneyString();
-		var scr = Math.round(Math.min(easedScore.value, levelScore));
+		var scr = Math.round(easedScore.value);
+		if (levelScore > 0) {
+			scr = Std.int(Math.min(scr, levelScore));
+		}
+
 
 		if (levelScore > 0) {
 			scr = Std.int(Math.min(levelScore, scr));

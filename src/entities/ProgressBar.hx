@@ -1,5 +1,6 @@
 package entities;
 
+import elke.Game;
 import elke.T;
 import h2d.Tile;
 import h2d.Bitmap;
@@ -11,19 +12,24 @@ import h2d.Object;
 
 class ProgressBar extends Object {
 	var easedScore = new EasedFloat(0, 0.3);
-	var easedScale = new EasedFloat(0, 0.4);
-	public var score(default, set) = 0;
- 	var previousLevelScore = 0;
-	public var levelScore(default, set) = 0;
-	public var width = 128.;
-	public var height = 24.;
 
-	var label:Text;
+	public var progress(default, set) = 0.;
+	var cutoffProgress = 0.;
+	public var maxProgress = 1.0;
+ 	public var minProgress = 0.;
+
+	public var width(default, set) = 128.;
+	public var height(default, set) = 24.;
+
+	var val = 0.;
+
+	//var label:Text;
 	var frame:ScaleGrid;
 
 	var paddingX = 6;
 	var paddingY = 5;
 
+	var cutoffBar: Bitmap;
 	var bar: Bitmap;
 
 	public var levellingUp = false;
@@ -31,84 +37,83 @@ class ProgressBar extends Object {
 	public function new(?p) {
 		super(p);
 
+		cutoffBar = new Bitmap(Tile.fromColor(0x361027), this);
 		bar = new Bitmap(Tile.fromColor(0xb42313), this);
 
 		frame = new ScaleGrid(hxd.Res.img.xpbarbg.toTile(), 3, 3, 4, 4, this);
 		frame.width = width;
 		frame.height = height;
-
-		label = new Text(hxd.Res.fonts.gridgazer.toFont(), this);
-		label.scale(0.5);
-		label.dropShadow = {
-			color: 0x150a1f,
-			dx: 2,
-			dy: 2,
-			alpha: 1
-		};
-
-		label.x = paddingX;
-		label.text = "EEE";
-		var b = label.getBounds();
-		label.y = Math.round(((height - paddingY * 2) - b.height) * 0.5 + paddingY);
-
-		easedScale.easeFunction = T.elasticOut;
+		var p = 1;
+		bar.x = p;
+		bar.y = p;
+		cutoffBar.x = cutoffBar.y = p;
 	}
 
 	override function sync(ctx:RenderContext) {
 		super.sync(ctx);
-		var untilNext = levelScore.toMoneyString();
-		var scr = Math.round(Math.min(easedScore.value, levelScore));
-
-		if (levelScore > 0) {
-			scr = Std.int(Math.min(levelScore, scr));
-			label.text = '${scr.toMoneyString()} / $untilNext';
-			bar.visible = true;
-			var p = 1;
-			var h = height - p * 2;
-			var w = Math.max(0, Math.min(width - p * 2, easedScale.value * width - p * 2));
-			if (levellingUp) {
-				w = width - p * 2;
-			}
-			bar.tile.scaleToSize(w, h);
-		} else {
-			label.text = '${scr.toMoneyString()}';
-			bar.visible = false;
-		}
 	}
 
-	function updateScale(score: Int) {
-		var scr = score;
-		if (levelScore > 0) {
-			//scr = Std.int(Math.min(levelScore, score));
-		}
+	public function update(dt: Float) {
+		var scr = Math.round(Math.min(easedScore.value, maxProgress));
 
-		var d = levelScore - previousLevelScore;
-		var ds = scr - previousLevelScore;
-		var s = Math.min(1, Math.max(0, ds / d));
+		updateScale();
+
+		scr = Std.int(Math.min(maxProgress, scr));
+		//label.text = '${scr.toMoneyString()} / $untilNext';
+		bar.visible = true;
 		var p = 1;
-		var w = s;
+		var h = height - p * 2;
 
-		bar.x = p;
-		bar.y = p;
+		var w = Math.max(0, Math.min(width - p * 2, val * width - p * 2));
 
-		easedScale.value = w;
-	}
+		var cutoffW = Math.max(0, Math.min(width - p * 2, cutoffProgress * width - p * 2));
 
-	function set_levelScore(s: Int) {
-		if (s > levelScore) {
-			previousLevelScore = levelScore;
-			easedScale.setImmediate(0);
+		if (levellingUp) {
+			w = width - p * 2;
 		}
 
-		return levelScore = s;
+		bar.tile.scaleToSize(w, h);
+		cutoffBar.tile.scaleToSize(cutoffW, h);
+
+		if (cutoffProgress > val) {
+			sinceCutoff += dt;
+			if (sinceCutoff > 0.8) {
+				cutoffProgress *= 0.98;
+			}
+		}
 	}
 
-	function set_score(s:Int) {
-		if (score != s) {
-			easedScore.value = s;
-			updateScale(s);
+	function updateScale() {
+		var d = maxProgress - minProgress;
+		var ds = progress - minProgress;
+		var s = Math.min(1, Math.max(0, ds / d));
+
+		val = s;
+	}
+
+	function set_width(w) {
+		frame.width = w;
+		return width = w;
+	}
+
+	function set_height(h) {
+		frame.height = h;
+		return height = h;
+	}
+
+	var sinceCutoff = 0.;
+	var cutOffThing = 1.0;
+	function set_progress(s:Float) {
+		if (s > cutoffProgress) {
+			cutoffProgress = s;
+			cutOffThing = s;
+		} else {
+			if (s < cutOffThing) {
+				cutOffThing = s; 
+				sinceCutoff = 0.;
+			}
 		}
 
-		return score = s;
+		return progress = s;
 	}
 }

@@ -87,6 +87,8 @@ class Guy extends Actor {
 			return false;
 		}
 
+		timeSinceAim = 0.;
+
 		if (heldFruit.length == 0) {
 			return false;
 		}
@@ -113,6 +115,7 @@ class Guy extends Actor {
 		}
 
 		throwLine.active = true;
+		throwLine.toThrow = toThrow;
 
 		state.game.sound.playWobble(hxd.Res.sound.preparethrow, 0.3);
 
@@ -121,10 +124,14 @@ class Guy extends Actor {
 		return true;
 	}
 
+	var timeSinceAim = 0.;
+
 	public function throwFruit() {
 		if (!aiming) {
 			return;
 		}
+
+		timeSinceAim = 0.;
 
 		//shaking = false;
 		toThrow.beingThrown = false;
@@ -166,6 +173,14 @@ class Guy extends Actor {
 		var rightArm = sprite.getSlice("rightArm");
 
 		var spaceY = 0.;
+
+		if (!aiming) {
+			timeSinceAim += dt;
+			if (timeSinceAim > 0.5) {
+				throwLine.lastDX = vx;
+				throwLine.lastDY = vy;
+			}
+		}
 
 		moveSpeedMultiplier = (aiming || throwing) ? 0.2 : 1;
 

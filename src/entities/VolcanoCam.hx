@@ -80,7 +80,6 @@ class VolcanoCam extends Entity2D {
 	var scoreInfo: Object;
 	var bottomUi: Object;
 	var barHeight = 8;
-	var bar: Bitmap;
 	var eruptionBar: ProgressBar;
 	var barFill: Bitmap;
 	var bg: Sprite;
@@ -153,9 +152,6 @@ class VolcanoCam extends Entity2D {
 		scoreInfo.x = width + 11 + frame.x;
 		scoreInfo.y = bottomUi.y + 30;
 
-		bar = new Bitmap(Tile.fromColor(0xffffff), bottomUi);
-		barFill = new Bitmap(Tile.fromColor(0xb42313), bar);
-
 		eruptionBar = new ProgressBar(bottomUi);
 
 		scoreBar = new ScoreBar(scoreInfo);
@@ -164,7 +160,8 @@ class VolcanoCam extends Entity2D {
 
 		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), bottomUi);
 		etaText.y = barHeight - 8;
-		etaText.x = bar.x + 4;
+		etaText.x = 6;
+		etaText.y = 4;
 		//bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
 		etaText.scale(0.5);
 		etaText.dropShadow = {
@@ -332,6 +329,8 @@ class VolcanoCam extends Entity2D {
 
 		t += dt;
 
+		eruptionBar.update(dt);
+
 		cameraContent.alpha = 1.0;
 		if (state.guy.x < 300 && state.game.s2d.mouseX < 300 && state.game.s2d.mouseY < 100) {
 			//frame.x = getScene().width - 8 - width - 8;
@@ -411,9 +410,9 @@ class VolcanoCam extends Entity2D {
 
 		var s = getScene();
 		if (s != null) {
-			var barWidth = (s.width - bottomUi.x) - padding;
-			bar.tile.scaleToSize(barWidth, barHeight);
-			barFill.tile.scaleToSize(Math.round((currentLevel / maxLevel) * barWidth), barHeight);
+			var barWidth = Math.min((s.width - bottomUi.x) - padding, 200);
+			eruptionBar.progress = currentLevel / maxLevel;
+			eruptionBar.width = barWidth;
 			var b = bottomUi.getBounds();
 			//bottomUi.x = padding;
 			//bottomUi.y = s.height - b.height - padding;

@@ -1,10 +1,19 @@
 package entities;
 
+import h3d.Vector;
 import elke.T;
 import h2d.Tile;
 
+typedef TrailPoint = {
+	x: Float,
+	y: Float,
+	a: Float,
+	tile: h2d.Tile,
+}
+
 class Fruit extends Actor {
 	public var cdb: Data.Fruits = null;
+	var trail: Array<TrailPoint> = [];
 
 	public function new(tile: Tile, data: Data.Fruits, s) {
 		super(s);
@@ -33,6 +42,7 @@ class Fruit extends Actor {
 		}
 
 		hitTimeout -= dt;
+		tp -= dt;
 
 		ripeTime -= dt;
 		if (scale < 1 || ripeTime > 0) {
@@ -58,12 +68,64 @@ class Fruit extends Actor {
 				onRemove();
 			}
 		}
+
+		if (thrown && !catapulted) {
+			var fmax = maxSpeed * 0.5;
+			var weakShot = vx * vx + vy * vy < fmax * fmax;
+			if (tp < 0 && !weakShot) {
+				tp = 0.001;
+				var dx = x - lx;
+				var dy = y + z - ly;
+
+				var segs = 4;
+				for (i in 0...segs) {
+					var t = trail[tIndex];
+					if (t == null) {
+						t = {x: 0, a: 1, y: 0, tile: tile.clone()};
+						trail.push(t);
+					}
+
+					t.x = Math.round(x - dx * (i / segs));
+					t.y = Math.round(y + z - dy * (i / segs));
+					t.a = 1.0;
+
+					tIndex ++;
+					tIndex %= maxTrails;
+				}
+				lx = x;
+				ly = y + z;
+			}
+		} else {
+			lx = x;
+			ly = y + z;
+		}
+
+		for (t in trail) {
+			t.a *= 0.8;
+		}
 	}
 
 	public var ripeTime = 5.0;
 	var maxRipeTime = 5.0;
 	public function isRipe() {
 		return ripeTime <= 0.;
+	}
+
+	var lx = 0.;
+	var ly = 0.;
+	var tp = 0.2;
+	var maxTrails = 18;
+	var tIndex = 0;
+	var tColor = new Vector();
+	override function draw() {
+		for (t in trail) {
+			if (t.a > 0.02) {
+				tColor.set(100,100, 100, t.a * 0.8);
+				var s = scale - t.a * 0.1;
+				state.actorGroup.addTransform(Math.round(t.x), Math.round(t.y), s, s, rotation, tColor, t.tile);
+			}
+		}
+		super.draw();
 	}
 
 	public override function onAdd() {

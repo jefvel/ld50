@@ -88,6 +88,22 @@ class GamePadHandler {
 		return pad.yAxis;
     }
 
+	public function getRightStickX() : Float {
+		if (!isActive()) {
+			return 0;
+		}
+
+		return pad.rxAxis;
+    }
+
+    public function getRightStickY() : Float {
+		if (!isActive()) {
+			return 0;
+		}
+
+		return pad.ryAxis;
+    }
+
 	inline function isActive() {
 		return pad != null && inFocus;
 	}
@@ -123,5 +139,9 @@ class GamePadHandler {
 	}
 	public function pressingDown() {
 		return isActive() && pad.yAxis > dz;
+	}
+
+	public function pressingConfirm() {
+		return isActive() && pad.isDown(hxd.Pad.DEFAULT_CONFIG.A);
 	}
 }
