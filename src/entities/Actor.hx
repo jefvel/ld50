@@ -12,6 +12,8 @@ enum ActorType {
 }
 
 class Actor extends WorldObject {
+	public var hitTimeout = 0.;
+
 	public var vx = 0.;
 	public var vy = 0.;
 	public var vz = 0.;
@@ -57,6 +59,7 @@ class Actor extends WorldObject {
 	var mass: Float = 1.;
 	public var uncollidable: Bool = false;
 	var filterGroup: Int = 0;
+	public var hitFloor = false;
 
 	public function onPickup() {}
 	public function onThrown() {}
@@ -83,6 +86,7 @@ class Actor extends WorldObject {
 			vz += gravity;
 			z += vz;
 			if (z > 0) {
+				hitFloor = true;
 				z = 0;
 				vz *= -bounciness;
 				vx *= groundFriction;

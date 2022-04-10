@@ -7,8 +7,13 @@ import elke.Game;
 class BasicInput extends Object {
 	var game:Game;
 
+	public var moveX = 0.;
+	public var moveY = 0.;
+
 	public var disabled(default, set) = false;
 	public var joystick:Joystick;
+
+	public var hideJoystick = false;
 
 	public function new(game:Game, ?p) {
 		super(p);
@@ -93,12 +98,20 @@ class BasicInput extends Object {
 		return Key.isDown(Key.S) || Key.isDown(Key.DOWN) || downPress;
 	}
 
-	public var moveX = 0.;
-	public var moveY = 0.;
+	public function confirmPressed() {
+		if (disabled) return false;
+		var pads = game.gamepads;
+		var confirmPress = pads.isBtnDown(BTNS.A);
+		return Key.isDown(Key.SPACE) || Key.isDown(Key.ENTER) || confirmPress;
+	}
 
 	public function update() {
 		var dx = 0.;
 		var dy = 0.;
+
+		if (hideJoystick) {
+			joystick.visible = false;
+		}
 
 		if (disabled) {
 			moveX = moveY = 0;
@@ -128,6 +141,11 @@ class BasicInput extends Object {
 			dy = joystick.my;
 		}
 
+		if (game.inputMethod == Gamepad) {
+			dx = game.gamepads.moveX;
+			dy = game.gamepads.moveY;
+		}
+
 		var l = Math.sqrt(dx * dx + dy * dy);
 		if (l > 0) {
 			dx /= l;
@@ -140,6 +158,12 @@ class BasicInput extends Object {
 		if (game.inputMethod == Touch) {
 			moveX *= Math.max(0.1, Math.min(1, joystick.magnitude));
 			moveY *= Math.max(0.1, Math.min(1, joystick.magnitude));
+		}
+
+		if (game.inputMethod == Gamepad) {
+			var magnitude = game.gamepads.magnitude;
+			moveX *= Math.max(0.1, Math.min(1, magnitude));
+			moveY *= Math.max(0.1, Math.min(1, magnitude));
 		}
 	}
 

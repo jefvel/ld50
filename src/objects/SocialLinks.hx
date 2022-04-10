@@ -11,6 +11,14 @@ import h2d.Object;
 class SocialLinks extends Object {
 	public var height = 0.;
 	public var width = 0.;
+	public var color(default, set) = 0xFFFFFFFF;
+
+	var instaText: Text;
+	var instaIcon: Bitmap;
+
+	var twitterText: Text;
+	var twitterIcon: Bitmap;
+
 	public function new(?p) {
 		super(p);
 		addButtons();
@@ -34,12 +42,12 @@ class SocialLinks extends Object {
 		if (titleText != null) {
 			socialsTitle = new Text(font, this);
 			socialsTitle.text = titleText;
-			socialsTitle.alpha = 0.2;
+			socialsTitle.alpha = 0.5;
 		}
 
 		var twitterBtn = new Interactive(1, 1, this);
-		var twitterIcon = new Bitmap(hxd.Res.img.twittericon.toTile(), twitterBtn);
-		var twitterText = new Text(font, twitterBtn);
+		twitterIcon = new Bitmap(hxd.Res.img.twittericon.toTile(), twitterBtn);
+		twitterText = new Text(font, twitterBtn);
 		twitterText.x = twitterIcon.tile.width + 4;
 		twitterText.y = Math.round((btnHeight - twitterText.textHeight) * 0.5 - 1);
 		twitterText.text = '@jefvel';
@@ -50,13 +58,15 @@ class SocialLinks extends Object {
 		twitterBtn.onClick = e -> {
 			visitLink("https://twitter.com/jefvel");
 		}
+		
+		var outAlpha = 0.8;
 
-		twitterBtn.alpha = 0.5;
+		twitterBtn.alpha = outAlpha;
 		twitterBtn.onOver = e -> {
 			twitterBtn.alpha = 1.0;
 		}
 		twitterBtn.onOut = e -> {
-			twitterBtn.alpha = 0.5;
+			twitterBtn.alpha = outAlpha;
 		}
 
 		if (socialsTitle != null) {
@@ -64,8 +74,8 @@ class SocialLinks extends Object {
 		}
 
 		var instagramBtn = new Interactive(1, 1, this);
-		var instaIcon = new Bitmap(hxd.Res.img.instaicon.toTile(), instagramBtn);
-		var instaText = new Text(font, instagramBtn);
+		instaIcon = new Bitmap(hxd.Res.img.instaicon.toTile(), instagramBtn);
+		instaText = new Text(font, instagramBtn);
 		instaText.x = instaIcon.tile.width + 4;
 		instaText.y = Math.round((btnHeight - instaText.textHeight) * 0.5 - 1);
 		instaText.text = '@fejvel';
@@ -79,18 +89,28 @@ class SocialLinks extends Object {
 
 		instagramBtn.y = twitterBtn.y + btnHeight + 4;
 
-		instagramBtn.alpha = 0.5;
+		instagramBtn.alpha = outAlpha;
 		instagramBtn.onOver = e -> {
 			instagramBtn.alpha = 1.0;
 		}
 
 		instagramBtn.onOut = e -> {
-			instagramBtn.alpha = 0.5;
+			instagramBtn.alpha = outAlpha;
 		}
+
 
 		var b = getBounds();
 		width = b.width;
 		height = b.height;
+	}
+
+	function set_color(c) {
+		twitterText.textColor = instaText.textColor = c;
+
+		instaIcon.color.setColor(c);
+		twitterIcon.color.setColor(c);
+
+		return color = c;
 	}
 	
 	function visitLink(url) {

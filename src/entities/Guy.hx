@@ -194,7 +194,7 @@ class Guy extends Actor {
 
 
 		if (!throwing) {
-			if (vx * vx + vy * vy > 0.5 * 0.5) {
+			if (vx * vx + vy * vy > 0.2 * 0.2) {
 				sprite.play("walk");
 			} else {
 				sprite.play("idle");

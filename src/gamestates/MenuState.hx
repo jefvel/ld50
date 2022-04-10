@@ -1,5 +1,8 @@
 package gamestates;
 
+import h2d.filter.Glow;
+import h2d.filter.Outline;
+import objects.FullscreenButton;
 import objects.SocialLinks;
 import h2d.Interactive;
 import entities.Toggle;
@@ -45,8 +48,10 @@ class MenuState extends GameState {
 		imgContainer.filter = new h2d.filter.Mask(mask);
 
 		socials = new SocialLinks(container);
+		socials.color = 0xff150a1f;
+		socials.filter = new Glow(0xffffff, 1);
 
-		if (GameSaveData.getCurrent().playedGames < 3) {
+		if (GameSaveData.getCurrent().playedGames < 2) {
 			socials.visible = false;
 		}
 
@@ -68,8 +73,15 @@ class MenuState extends GameState {
 		toggle = new Toggle(container);
 		toggle.value = data.showTutorial;
 
+		fsBtn = new FullscreenButton(container);
+
 		positionStuff();
+
+		input = new BasicInput(game, container);
+		input.hideJoystick = true;
 	}
+
+	var fsBtn: FullscreenButton;
 
 	var noise = new Perlin();
 
@@ -77,12 +89,16 @@ class MenuState extends GameState {
 	var alphaOut = new EasedFloat(1, 0.9);
 	var mask: Bitmap;
 
+	var input: BasicInput;
+
 	var started = false;
 	function startGame() {
 		if(started) return;
 		var s = GameSaveData.getCurrent();
 		s.showTutorial = toggle.value;
 		s.save();
+
+		socials.visible = false;
 
 		started = true;
 		out.value = -200.;
@@ -97,6 +113,11 @@ class MenuState extends GameState {
 	override function update(dt:Float, timeUntilTick:Float) {
 		super.update(dt, timeUntilTick);
 		time += dt;
+		if (!started) {
+			if (input.confirmPressed()) {
+				startGame();
+			}
+		}
 	}
 
 	function positionStuff() {
@@ -104,15 +125,16 @@ class MenuState extends GameState {
 		var ox = 0;//noise.perlin1D(1333, time * 0.1, 4) * 7.;
 		var oy = 0;//noise.perlin1D(1343, time * 0.13, 4) * 7.;
 		var w = game.s2d.width;
+		var h = game.s2d.height;
 
 		title.scaleX = title.scaleY = 1;
 
-		if (w <= 512) {
+		if (w <= 512 || h < 256) {
 			imgContainer.scaleX = imgContainer.scaleY = 1;
 			title.scaleX = title.scaleY = 0.5;
-		} else if (w <= 1024) {
+		} else if (w <= 1024 || h < 512) {
 			imgContainer.scaleX = imgContainer.scaleY = 2;
-		} else if (w <= 2048) {
+		} else if (w <= 2048 || h < 1024) {
 			imgContainer.scaleX = imgContainer.scaleY = 3;
 		}
 
@@ -140,18 +162,30 @@ class MenuState extends GameState {
 		toggle.y = title.y - 28;
 
 		var sb = socials.getBounds();
-		socials.x = game.s2d.width - sb.width - 8;
-		socials.y = game.s2d.height - sb.height - 8;
+		var ib = imgContainer.getBounds();
+		socials.x = ib.x + ib.width - sb.width - 10;
+		socials.y = ib.y + 8; 
+		fsBtn.x = ib.x + ib.width - fsBtn.width - 8;
+		fsBtn.y = ib.y + 128 * imgContainer.scaleX - fsBtn.height - 8;
+		//socials.x = game.s2d.width - sb.width - 8;
+		//socials.y = game.s2d.height - sb.height - 8;
 	}
 
 	override function onEvent(e:Event) {
 		super.onEvent(e);
+		if (e.kind == ERelease) {
+			#if js
+			if (game.usingTouch) {
+				game.pixelSize = 1;
+				hxd.Window.getInstance().displayMode = Borderless;
+			}
+			#end
+		}
 	}
 
 	override function onRender(e:Engine) {
 		super.onRender(e);
 		positionStuff();
-
 	}
 
 	override function onLeave() {

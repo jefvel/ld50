@@ -1,5 +1,6 @@
 package;
 
+import gamestates.StartupState;
 import gamestates.MenuState;
 import gamestates.PlayState;
 import elke.Game;
@@ -13,7 +14,7 @@ class Main {
 		var color = Std.parseInt(colorString);
 		game = new Game({
 			//initialState: new PlayState(),
-			initialState: new MenuState(),
+			initialState: new StartupState(),
 			onInit: () -> {},
 			tickRate: Const.TICK_RATE,
 			pixelSize: Const.PIXEL_SIZE,

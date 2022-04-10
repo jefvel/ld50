@@ -1,5 +1,6 @@
 package gamestates;
 
+import elke.things.Newgrounds;
 import hxd.Window;
 import h2d.col.Point;
 import h3d.Vector;
@@ -183,6 +184,8 @@ class PlayState extends elke.gamestate.GameState {
 			return;
 		}
 
+		lost = true;
+
 		warningsGroup.visible = false;
 		hpBarsGroup.visible = false;
 
@@ -192,11 +195,25 @@ class PlayState extends elke.gamestate.GameState {
 
 		musicChannel.stop();
 
+		Newgrounds.instance.submitHighscore(11712, score);
+		Newgrounds.instance.getTop10Scoreboard(11712, (scores) -> {
+			var s = scores[0];
+			var bestOfTheDay = false;
+			if (s == null) {
+				bestOfTheDay = true;
+			} else if (s.scoreRaw <= score) {
+				bestOfTheDay = true;
+			}
+
+			if (bestOfTheDay) {
+				Newgrounds.instance.unlockMedal(68428);
+			}
+		}, Day);
+
 		var llevl = levels.all_levels.Level_1;
 		lava = llevl.l_Lava.render();
 		foreground.addChild(lava);
 		lava.y = -llevl.pxHei - 400.;
-		lost = true;
 
 		whiteFlash = new Bitmap(Tile.fromColor(0xffffff, 1, 1), uiContainer);
 
@@ -301,22 +318,22 @@ class PlayState extends elke.gamestate.GameState {
 		//addActor(fruit);
 	}
 
+	var spawnCount = 1;
 	function spawnWave() {
-		var spawnCount = 1;
-		if (wave > 2) {
+		if (wave == 3) {
 			spawnCount = 2;
 		}
 
-		if (wave > 5) {
+		if (wave == 6) {
 			spawnCount = 3;
 		}
 
-		if (wave > 7) {
+		if (wave == 8) {
 			spawnCount = 4;
 			baddieSpawnInterval = 17;
 		}
 
-		if (wave > 9) {
+		if (wave == 10) {
 			spawnCount = 5;
 		}
 
@@ -325,7 +342,11 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		if (wave > 11) {
-			baddieSpawnInterval = 15;
+			baddieSpawnInterval = 14;
+		}
+
+		if (wave > 15) {
+			spawnCount ++;
 		}
 
 		for (_ in 0...spawnCount) {
@@ -341,7 +362,6 @@ class PlayState extends elke.gamestate.GameState {
 
 		wave ++;
 		spawnIn = baddieSpawnInterval;
-
 	}
 
 	public function checkWave(dt: Float) {
@@ -390,6 +410,12 @@ class PlayState extends elke.gamestate.GameState {
 			}
 
 			if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
+				#if js
+				if (input.joystick.touchId == e.touchId) {
+					return;
+				}
+				#end
+
 				finishAim();
 				if (tutorial != null) {
 					tutorial.threwThing = true;
@@ -411,6 +437,12 @@ class PlayState extends elke.gamestate.GameState {
 		}
 		if (e.kind == EKeyDown && e.keyCode == Key.I) {
 			cam.currentLevel = .0;
+		}
+		#end
+
+		#if js
+		if (game.inputMethod == Touch && e.kind == ERelease) {
+			Window.getInstance().displayMode = Borderless;
 		}
 		#end
 	}
@@ -449,6 +481,10 @@ class PlayState extends elke.gamestate.GameState {
 				t.remove(tree);
 				tree.revive();
 			}
+		}
+
+		if (!upgrades.hasUpgradesLeft()) {
+			Newgrounds.instance.unlockMedal(68426);
 		}
 
 		cam.hasUpgrades = upgrades.hasUpgradesLeft();
@@ -666,11 +702,17 @@ class PlayState extends elke.gamestate.GameState {
 				var dy = guy.y - f.y;
 				if (dx * dx + dy * dy < rSq) {
 					guy.pickupFruit(f);
+					if (!heldFruitAchievementGot) {
+						if (!f.hitFloor) {
+							Newgrounds.instance.unlockMedal(68427);
+							heldFruitAchievementGot = true;
+						}
+					}
 				}
 			}
 
 			if (f.type == Fruit) {
-				if (f.thrown && !f.catapulted) {
+				if (f.thrown && !f.catapulted && f.hitTimeout <= 0) {
 					var fmax = f.maxSpeed * 0.5;
 
 					for (b in baddies) {
@@ -683,6 +725,7 @@ class PlayState extends elke.gamestate.GameState {
 						var r = f.radius + b.radius;
 						if (lsq < r * r) {
 							var l = Math.sqrt(lsq);
+							f.hitTimeout = 0.1;
 							dx /= l;
 							dy /= l;
 							var vdst = Math.sqrt(f.vx * f.vx + f.vy * f.vy);
@@ -737,6 +780,8 @@ class PlayState extends elke.gamestate.GameState {
 			whiteFlash.alpha *= 0.94;
 		}
 	}
+
+	var heldFruitAchievementGot = false;
 
 	public function removeFruit(f) {
 		fruits.remove(f);

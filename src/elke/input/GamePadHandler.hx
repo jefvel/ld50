@@ -92,6 +92,25 @@ class GamePadHandler {
 		return pad != null && inFocus;
 	}
 
+	public var moveX(get, null) : Float = .0;
+	public var moveY(get, null) : Float = .0;
+	public var magnitude(get, null): Float = 0.;
+	function get_moveX() {
+		if (!isActive()) return 0.;
+		return pad.xAxis;
+	}
+
+	function get_moveY() {
+		if (!isActive()) return 0.;
+		return pad.yAxis;
+	}
+
+	function get_magnitude() {
+		if (!isActive()) return 0.;
+		var l = Math.sqrt(moveX * moveX + moveY * moveY);
+		return l;
+	}
+
 	final dz = 0.5;
 	public function pressingLeft() {
 		return isActive() && pad.xAxis < -dz;

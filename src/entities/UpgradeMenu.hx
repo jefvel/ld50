@@ -66,13 +66,24 @@ class UpgradeButton extends Interactive {
 
 		selectEase.easeFunction = T.elasticOut;
 
+		alpha = 0.6;
+
 		onOver = e -> {
+			alpha = 1.0;
+			Game.instance.sound.playSfx(hxd.Res.sound.buttonhover, 0.1);
+		}
+
+		onOut = e -> {
+			alpha = 0.6;
+		}
+
+		onPush = e -> {
 			if (selected) return;
 			hoverEase.value = -2;
 			Game.instance.sound.playWobble(hxd.Res.sound.tick);
 		}
 
-		onOut = e -> {
+		onReleaseOutside = e -> {
 			if (selected) return;
 			hoverEase.value = 0;
 		}

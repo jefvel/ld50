@@ -32,6 +32,8 @@ class Fruit extends Actor {
 			vz = 0.;
 		}
 
+		hitTimeout -= dt;
+
 		ripeTime -= dt;
 		if (scale < 1 || ripeTime > 0) {
 			var t = Math.min(1 - (ripeTime / maxRipeTime), 1);

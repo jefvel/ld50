@@ -13,6 +13,15 @@ typedef HighScorePost = {
 	score: String,
 }
 
+@:enum
+abstract HighscorePeriod(String) {
+	var All = "A";
+	var Year = "Y";
+	var Month = "M";
+	var Week = "W";
+	var Day = "D";
+}
+
 private class NewgroundsData {
 	public var failedMedalUnlocks: Array<Int> = [];
 	public var failedHighscorePosts: Array<{ boardID: Int, score: Int }> = [];
@@ -170,7 +179,7 @@ class Newgrounds {
 		#end
 	}
 
-	public function getTop10Scoreboard(boardID: Int, onComplete: Array<HighScorePost> -> Void, user: String = null) {
+	public function getTop10Scoreboard(boardID: Int, onComplete: Array<HighScorePost> -> Void, period: HighscorePeriod = All,  user: String = null) {
 		#if js
 		if (!signedIn) {
 			onComplete([]);
@@ -178,7 +187,7 @@ class Newgrounds {
 		}
 
 		NGLite.core.calls.scoreBoard
-		.getScores(boardID, 10, 0, ALL, false, null, user)
+		.getScores(boardID, 10, 0, cast period, false, null, user)
 		.addDataHandler(data -> {
 			var res = data.result.data.scores.map((s) -> ({
 				name: s.user.name,

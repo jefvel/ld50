@@ -77,10 +77,11 @@ class VolcanoCam extends Entity2D {
 	var criticalLevel = 0.8;
 	//var criticalLevel = 0.1;
 
-	var lowerInfo: Object;
+	var scoreInfo: Object;
 	var bottomUi: Object;
 	var barHeight = 8;
 	var bar: Bitmap;
+	var eruptionBar: ProgressBar;
 	var barFill: Bitmap;
 	var bg: Sprite;
 	var volcano: Sprite;
@@ -144,23 +145,27 @@ class VolcanoCam extends Entity2D {
 		timeTextBg.scaleY = timeText.y * 2 + timeText.textHeight; 
 		timeTextBg.alpha = 0.2;
 
-		lowerInfo = new Object(this);
-		lowerInfo.x = width + 12 + frame.x;
-		lowerInfo.y = cameraContent.y;
-
 		bottomUi = new Object(this);
+		bottomUi.x = width + 11 + frame.x;
+		bottomUi.y = cameraContent.y;
+
+		scoreInfo = new Object(this);
+		scoreInfo.x = width + 11 + frame.x;
+		scoreInfo.y = bottomUi.y + 30;
 
 		bar = new Bitmap(Tile.fromColor(0xffffff), bottomUi);
 		barFill = new Bitmap(Tile.fromColor(0xb42313), bar);
 
-		scoreBar = new ScoreBar(lowerInfo);
+		eruptionBar = new ProgressBar(bottomUi);
+
+		scoreBar = new ScoreBar(scoreInfo);
 
 		var barY = 0.; // bar.y + barHeight + 2
 
 		etaText = new Text(hxd.Res.fonts.gridgazer.toFont(), bottomUi);
-		etaText.y = 0;
-		etaText.x = bar.x;
-		bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
+		etaText.y = barHeight - 8;
+		etaText.x = bar.x + 4;
+		//bar.y = Math.round(etaText.y + etaText.textHeight * 0.5 + 3);
 		etaText.scale(0.5);
 		etaText.dropShadow = {
 			color: 0x150a1f,
@@ -171,7 +176,7 @@ class VolcanoCam extends Entity2D {
 
 		rumbleSound = state.game.sound.playSfx(hxd.Res.sound.volcanorumbl, 0, true);
 
-		var scoreTextContainer = new Object(lowerInfo);
+		var scoreTextContainer = new Object(scoreInfo);
 		//scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
 		scoreTextContainer.y = barY + scoreBar.height + 2;
 		statusFeed = new StatusFeed<Text>(scoreTextContainer);
@@ -330,12 +335,12 @@ class VolcanoCam extends Entity2D {
 		cameraContent.alpha = 1.0;
 		if (state.guy.x < 300 && state.game.s2d.mouseX < 300 && state.game.s2d.mouseY < 100) {
 			//frame.x = getScene().width - 8 - width - 8;
-			//lowerInfo.x = frame.x - lowerInfo.getBounds().width - 14;
+			//scoreInfo.x = frame.x - scoreInfo.getBounds().width - 14;
 			cameraContent.alpha = 0.5;
 		} else if (state.guy.x > state.level.pxWid - 200) {
 			//frame.x = 8;
-			//lowerInfo.x = width + 14 + frame.x;
-			//lowerInfo.y = frame.y;
+			//scoreInfo.x = width + 14 + frame.x;
+			//scoreInfo.y = frame.y;
 		}
 		cameraContent.x = frame.x + frame.borderLeft - 1;
 		cameraContent.y = frame.y + frame.borderTop - 1;
@@ -406,12 +411,12 @@ class VolcanoCam extends Entity2D {
 
 		var s = getScene();
 		if (s != null) {
-			var barWidth = s.width - padding * 2;
+			var barWidth = (s.width - bottomUi.x) - padding;
 			bar.tile.scaleToSize(barWidth, barHeight);
 			barFill.tile.scaleToSize(Math.round((currentLevel / maxLevel) * barWidth), barHeight);
 			var b = bottomUi.getBounds();
-			bottomUi.x = padding;
-			bottomUi.y = s.height - b.height - padding;
+			//bottomUi.x = padding;
+			//bottomUi.y = s.height - b.height - padding;
 		}
 
 		var timeLeft = Math.round((maxLevel - currentLevel) / eatScale);
@@ -458,7 +463,7 @@ class VolcanoCam extends Entity2D {
 		state.showUpgrades(() -> {
 			currentUpgradeLevel ++;
 			if (currentUpgradeLevel >= upgradeLevels.length) {
-				untilNextLevel = Math.round(untilNextLevel * 1.2);
+				untilNextLevel = Math.round(untilNextLevel * 1.18);
 			} else {
 				untilNextLevel = upgradeLevels[currentUpgradeLevel];
 			}

@@ -1,5 +1,6 @@
 package gamestates;
 
+import elke.things.Newgrounds;
 import elke.graphics.Sprite;
 import elke.process.Timeout;
 import elke.graphics.Transition;
@@ -40,9 +41,22 @@ class GameOverState extends GameState {
 		15000, // S
 	];
 
+	var thresholdMedals = [
+		68383,
+		68384,
+		68385,
+		68386,
+		68387,
+		68388,
+		68389,
+	];
+
 	var rankSprite: Sprite;
+	var input: BasicInput;
 	override function onEnter() {
 		container = new Object(game.s2d);
+		input = new BasicInput(game, container);
+
 		textContainer = new Object(container);
 		title = new Text(hxd.Res.fonts.gridgazer.toFont(), textContainer);
 		title.text = "GAME OVER";
@@ -62,6 +76,7 @@ class GameOverState extends GameState {
 
 		var index = 0;
 		for (i in 0...scoreThresholds.length) {
+			Newgrounds.instance.unlockMedal(thresholdMedals[i]);
 			if (scoreThresholds[i] > state.score) {
 				break;
 			}
@@ -104,11 +119,26 @@ class GameOverState extends GameState {
 		super.onEvent(e);
 		if (left) return;
 		if (!canLeave) return;
+
 		if (e.kind == EPush) {
-			left = true;
-			Transition.to(() -> {
-				game.states.setState(new MenuState());
-			});
+			gotoMenu();
+		}
+	}
+
+	function gotoMenu() {
+		if (left) return;
+		left = true;
+		Transition.to(() -> {
+			game.states.setState(new MenuState());
+		});
+	}
+
+	override function update(dt:Float, timeUntilTick:Float) {
+		if (left) return;
+		if (!canLeave) return;
+
+		if (input.confirmPressed()) {
+			gotoMenu();
 		}
 	}
 
