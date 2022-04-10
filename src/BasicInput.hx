@@ -7,7 +7,7 @@ import elke.Game;
 class BasicInput extends Object {
 	var game:Game;
 
-	public var disabled = false;
+	public var disabled(default, set) = false;
 	public var joystick:Joystick;
 
 	public function new(game:Game, ?p) {
@@ -91,5 +91,63 @@ class BasicInput extends Object {
 		var pads = game.gamepads;
 		var downPress = pads.isBtnDown(BTNS.dpadDown) || pads.getStickY() > 0.5;
 		return Key.isDown(Key.S) || Key.isDown(Key.DOWN) || downPress;
+	}
+
+	public var moveX = 0.;
+	public var moveY = 0.;
+
+	public function update() {
+		var dx = 0.;
+		var dy = 0.;
+
+		if (disabled) {
+			moveX = moveY = 0;
+			return;
+		}
+
+		if (game.inputMethod == KeyboardAndMouse) {
+			if (leftPressed()) {
+				dx -= 1;
+			}
+
+			if (rightPressed()) {
+				dx += 1;
+			}
+
+			if (upPressed()) {
+				dy -= 1;
+			}
+
+			if (downPressed()) {
+				dy += 1;
+			}
+		}
+
+		if (game.inputMethod == Touch) {
+			dx = joystick.mx;
+			dy = joystick.my;
+		}
+
+		var l = Math.sqrt(dx * dx + dy * dy);
+		if (l > 0) {
+			dx /= l;
+			dy /= l;
+		}
+
+		moveX = dx;
+		moveY = dy;
+
+		if (game.inputMethod == Touch) {
+			moveX *= Math.max(0.1, Math.min(1, joystick.magnitude));
+			moveY *= Math.max(0.1, Math.min(1, joystick.magnitude));
+		}
+	}
+
+	function set_disabled(d) {
+		if (d) {
+			joystick.end();
+		}
+
+		return disabled = d;
 	}
 }

@@ -438,7 +438,7 @@ class VolcanoCam extends Entity2D {
 
 		var scr = Math.round(state.smoothedScore.value);
 		if (!state.lost && hasUpgrades) {
-			if (state.score > untilNextLevel) {
+			if (state.score >= untilNextLevel) {
 				scr = untilNextLevel;
 				levelUp();
 			}

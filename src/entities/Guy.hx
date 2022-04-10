@@ -24,7 +24,7 @@ class Guy extends Actor {
 		super(s);
 
 		maxSpeed = 9;
-		moveSpeed = 1.0;
+		moveSpeed = 1.1;
 		friction = 0.7;
 
 		sprite = hxd.Res.img.guy_tilesheet.toAnimation();
@@ -194,7 +194,7 @@ class Guy extends Actor {
 
 
 		if (!throwing) {
-			if (vx * vx + vy * vy > 1) {
+			if (vx * vx + vy * vy > 0.5 * 0.5) {
 				sprite.play("walk");
 			} else {
 				sprite.play("idle");

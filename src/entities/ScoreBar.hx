@@ -65,7 +65,7 @@ class ScoreBar extends Object {
 			bar.visible = true;
 			var p = 1;
 			var h = height - p * 2;
-			var w = Math.max(0, Math.min(width - p * 2, easedScale.value));
+			var w = Math.max(0, Math.min(width - p * 2, easedScale.value * width - p * 2));
 			if (levellingUp) {
 				w = width - p * 2;
 			}
@@ -76,7 +76,7 @@ class ScoreBar extends Object {
 		}
 	}
 
-	function updateScale() {
+	function updateScale(score: Int) {
 		var scr = score;
 		if (levelScore > 0) {
 			//scr = Std.int(Math.min(levelScore, score));
@@ -86,7 +86,7 @@ class ScoreBar extends Object {
 		var ds = scr - previousLevelScore;
 		var s = Math.min(1, Math.max(0, ds / d));
 		var p = 1;
-		var w = Math.round(s * (width - p * 2 - 1));
+		var w = s;
 
 		bar.x = p;
 		bar.y = p;
@@ -106,7 +106,7 @@ class ScoreBar extends Object {
 	function set_score(s:Int) {
 		if (score != s) {
 			easedScore.value = s;
-			updateScale();
+			updateScale(s);
 		}
 
 		return score = s;

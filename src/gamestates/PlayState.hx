@@ -1,5 +1,6 @@
 package gamestates;
 
+import hxd.Window;
 import h2d.col.Point;
 import h3d.Vector;
 import elke.graphics.Transition;
@@ -181,6 +182,9 @@ class PlayState extends elke.gamestate.GameState {
 		if (lost) {
 			return;
 		}
+
+		warningsGroup.visible = false;
+		hpBarsGroup.visible = false;
 
 		var d = GameSaveData.getCurrent();
 		d.playedGames ++;
@@ -375,6 +379,11 @@ class PlayState extends elke.gamestate.GameState {
 	override function onEvent(e:Event) {
 		if (!guy.dead && !upgrades.shown) {
 			if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
+				if (game.inputMethod == Touch) {
+					if (e.relX < Window.getInstance().width * 0.5) {
+						return;
+					}
+				}
 				startAim();
 			}
 
@@ -567,6 +576,8 @@ class PlayState extends elke.gamestate.GameState {
 		if (game.paused) return;
 		if (paused) return;
 
+		input.update();
+
 		if (tutorial != null) {
 			tutorial.update(dt);
 		}
@@ -598,22 +609,9 @@ class PlayState extends elke.gamestate.GameState {
 			}
 		}
 
-		var vx = 0.;
-		var vy = 0.;
 		var sp = guy.moveSpeed;
-
-		if (input.walkingLeft()) {
-			vx -= sp;
-		}
-		if (input.walkingRight()) {
-			vx += sp;
-		}
-		if (input.walkingDown()) {
-			vy += sp;
-		}
-		if (input.walkingUp()) {
-			vy -= sp;
-		}
+		var vx = input.moveX * sp;
+		var vy = input.moveY * sp;
 
 		if (!guy.dead) {
 			guy.vx += vx;

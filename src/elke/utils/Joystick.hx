@@ -8,7 +8,7 @@ import elke.entity.Entity2D;
 class Joystick extends Entity2D {
 	var bg: Graphics;
 	var dot: Graphics;
-	var r = 54.;
+	var r = 36.;
 	var maxR = 72;
 	#if js
 	public var touchId = null;
@@ -126,8 +126,8 @@ class Joystick extends Entity2D {
 
 		magnitude = l / r;
 
-		mx *= l / r;
-		my *= l / r;
+		mx *= magnitude;
+		my *= magnitude;
 
 		if (magnitude < 0.5) {
 			mx *= (1 - 2 * (0.5 - magnitude));
@@ -142,7 +142,7 @@ class Joystick extends Entity2D {
 		dot.y = Math.round(dy);
 	}
 
-	var deadZone = 0.2;
+	var deadZone = 0.15;
 	public function goingLeft() {
 		return active && mx < -deadZone;
 	}
@@ -164,5 +164,7 @@ class Joystick extends Entity2D {
 		#else
 		touchId = 0;
 		#end
+
+		mx = my = magnitude = 0;
 	}
 }
