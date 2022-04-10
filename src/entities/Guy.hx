@@ -87,7 +87,6 @@ class Guy extends Actor {
 			return false;
 		}
 
-		timeSinceAim = 0.;
 
 		if (heldFruit.length == 0) {
 			return false;
@@ -131,8 +130,6 @@ class Guy extends Actor {
 			return;
 		}
 
-		timeSinceAim = 0.;
-
 		//shaking = false;
 		toThrow.beingThrown = false;
 
@@ -165,6 +162,9 @@ class Guy extends Actor {
 		throwing = false;
 	}
 
+	public var lookX = 0.;
+	public var lookY = 0.;
+
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
@@ -174,12 +174,20 @@ class Guy extends Actor {
 
 		var spaceY = 0.;
 
-		if (!aiming) {
+		//if (!aiming) {
+		var rx = state.game.gamepads.getRightStickX();
+		var ry = state.game.gamepads.getRightStickY();
+		if (rx * rx + ry * ry > 0.6 * 0.6) {
+			timeSinceAim = 0.;
+			lookX = rx;
+			lookY = ry;
+		} else {
 			timeSinceAim += dt;
-			if (timeSinceAim > 0.5) {
-				throwLine.lastDX = vx;
-				throwLine.lastDY = vy;
-			}
+		}
+
+		if (timeSinceAim > 0.5) {
+			lookX = vx;
+			lookY = vy;
 		}
 
 		moveSpeedMultiplier = (aiming || throwing) ? 0.2 : 1;

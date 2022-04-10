@@ -262,9 +262,18 @@ class Baddie extends Actor {
 
 	var fadingOut = false;
 
+	var untilKeepInBounds = 1.5;
+
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
+
+		if (untilKeepInBounds > 0) {
+			untilKeepInBounds -= dt;
+			if (untilKeepInBounds < 0) {
+				keepInBounds = true;
+			}
+		}
 
 		color.r += (1 - color.r) * 0.3;
 		color.g += (1 - color.g) * 0.3;

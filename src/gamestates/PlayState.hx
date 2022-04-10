@@ -354,9 +354,10 @@ class PlayState extends elke.gamestate.GameState {
 		for (_ in 0...spawnCount) {
 			var onLeft = Math.random() > 0.5;
 			var b = new Baddie(this);
-			b.x = level.pxWid;
+			b.keepInBounds = false;
+			b.x = level.pxWid + 32;
 			if (onLeft) {
-				b.x = 0;
+				b.x = 0 - 32;
 			}
 
 			b.y = Math.random() * level.pxHei;
@@ -514,6 +515,7 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		paused = true;
+		pauseFrame = true;
 		blur.useScreenResolution = true;
 		blurEase.value = 7;
 		upgradeAlphaFade.value = 0.4;
@@ -604,9 +606,6 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 
-
-
-
 		p.x = Math.max(0, Math.min(game.s2d.width, p.x));
 		p.y = Math.max(32, Math.min(game.s2d.height - 40, p.y));
 
@@ -615,7 +614,23 @@ class PlayState extends elke.gamestate.GameState {
 
 	var triggerDown = false;
 
+	var pauseFrame = false;
+	var confirmWasPressed = false;
 	override function tick(dt:Float) {
+		if (!paused) {
+			if (pauseFrame) {
+				pauseFrame = false;
+			}
+		}
+
+		if (pauseFrame) {
+			if (input.confirmPressed(true)) {
+				confirmWasPressed = true;
+			}
+		}
+
+		if (pauseFrame) return;
+
 		if (game.paused) return;
 		if (paused) return;
 
@@ -630,15 +645,19 @@ class PlayState extends elke.gamestate.GameState {
 			gameTime += dt;
 		}
 
-		if (!triggerDown) {
-			if (input.triggerPressed() || input.confirmPressed()) {
-				triggerDown = true;
-				startAim();
-			}
+		if (confirmWasPressed && !input.confirmPressed()) {
+			confirmWasPressed = false;
 		} else {
-			if (!input.triggerPressed() && !input.confirmPressed()) {
-				finishAim();
-				triggerDown = false;
+			if (!triggerDown) {
+				if (input.triggerPressed() || (input.confirmPressed() && !confirmWasPressed)) {
+					triggerDown = true;
+					startAim();
+				}
+			} else {
+				if (!input.triggerPressed() && !input.confirmPressed()) {
+					finishAim();
+					triggerDown = false;
+				}
 			}
 		}
 

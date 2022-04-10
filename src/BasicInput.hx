@@ -104,8 +104,8 @@ class BasicInput extends Object {
 		return Key.isDown(Key.S) || Key.isDown(Key.DOWN) || downPress;
 	}
 
-	public function confirmPressed() {
-		if (disabled) return false;
+	public function confirmPressed(forceCheck = false) {
+		if (disabled && !forceCheck) return false;
 		var pads = game.gamepads;
 		var confirmPress = pads.isBtnDown(BTNS.A);
 		return Key.isDown(Key.SPACE) || Key.isDown(Key.ENTER) || confirmPress;

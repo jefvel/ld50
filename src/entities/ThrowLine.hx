@@ -75,8 +75,8 @@ class ThrowLine extends Object {
 
 		if (state.game.inputMethod == Gamepad) {
 			autoAim = true;
-			var rx = state.game.gamepads.getRightStickX();
-			var ry = state.game.gamepads.getRightStickY();
+			var rx = state.guy.lookX;
+			var ry = state.guy.lookY;
 			if (rx * rx + ry * ry > 0.6 * 0.6) {
 				dx = rx;
 				dy = ry;
