@@ -11,7 +11,7 @@ class Tree extends Actor {
 	var fallVal = new EasedFloat(0, 1.1);
 	var heldFruit: Array<Fruit> = [];
 
-	var maxLife = 30.;
+	public var maxLife = 30.;
 
 	public function new(s) {
 		super(s);

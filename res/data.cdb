@@ -45,7 +45,7 @@
 				{
 					"ID": "Apple",
 					"Name": "Apple",
-					"Power": 1,
+					"Power": 1.2,
 					"Icon": {
 						"file": "img/fruits.png",
 						"size": 16,
@@ -56,7 +56,7 @@
 				{
 					"ID": "Banana",
 					"Name": "Banana",
-					"Power": 1.5,
+					"Power": 1.8,
 					"Icon": {
 						"file": "img/fruits.png",
 						"size": 16,
@@ -67,7 +67,7 @@
 				{
 					"ID": "Grapes",
 					"Name": "Grapes",
-					"Power": 2,
+					"Power": 2.5,
 					"Icon": {
 						"file": "img/fruits.png",
 						"size": 16,
@@ -120,13 +120,13 @@
 				{
 					"ID": "Capacity",
 					"Name": "Carry Power",
-					"Description": "Increases amount of fruit you can carry",
+					"Description": "Increases amount you can carry",
 					"MaxUpgrades": 2
 				},
 				{
 					"ID": "Resurrect",
 					"Name": "Revive Tree",
-					"Description": "Makes a couple dead trees live again",
+					"Description": "Revive and heal all trees.\nGet 250 points per living tree.",
 					"MaxUpgrades": 2
 				},
 				{

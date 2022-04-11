@@ -75,12 +75,13 @@ class GameOverState extends GameState {
 		rankSprite.originX = rankSprite.originY = 20;
 
 		var index = 0;
+		Newgrounds.instance.unlockMedal(thresholdMedals[0]);
 		for (i in 0...scoreThresholds.length) {
-			Newgrounds.instance.unlockMedal(thresholdMedals[i]);
 			if (scoreThresholds[i] > state.score) {
 				break;
 			}
 			index ++;
+			Newgrounds.instance.unlockMedal(thresholdMedals[index]);
 		}
 
 		rankSprite.animation.currentFrame = index;

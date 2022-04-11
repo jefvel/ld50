@@ -75,8 +75,9 @@ class ThrowLine extends Object {
 
 		if (state.game.inputMethod == Gamepad) {
 			autoAim = true;
-			var rx = state.guy.lookX;
-			var ry = state.guy.lookY;
+			dx = state.guy.lookX;
+			dy = state.guy.lookY;
+			/*
 			if (rx * rx + ry * ry > 0.6 * 0.6) {
 				dx = rx;
 				dy = ry;
@@ -86,12 +87,14 @@ class ThrowLine extends Object {
 				dx = lastDX;
 				dy = lastDY;
 			}
+			*/
 		}
 
 		if (state.game.inputMethod == Touch) {
 			autoAim = true;
-			var rx = state.guy.vx;
-			var ry = state.guy.vy;
+			dx = state.guy.lookX;
+			dy = state.guy.lookY;
+		/*
 			if (rx * rx + ry * ry > 0.2 * 0.2) {
 				dx = rx;
 				dy = ry;
@@ -101,16 +104,32 @@ class ThrowLine extends Object {
 				dx = lastDX;
 				dy = lastDY;
 			}
+			*/
 		}
 
+
+		arrowRotation = Math.atan2(dy, dx);
+
+		var hitThreshold = 0.955;
 		if (autoAim) {
+			hitThreshold = 0;
+		}
+		{
+			var len = Math.sqrt(dx * dx + dy * dy);
+			dx /= len;
+			dy /= len;
 			var target: Actor = null;
 			var closest = Math.POSITIVE_INFINITY;
 			inline function tryTarget(t: Actor) {
 				var _dx = t.x - state.guy.x;
 				var _dy = t.y - state.guy.y;
-				var dot = _dx * dx + _dy * dy;
-				if (dot > 0) {
+
+				var l = Math.sqrt(_dx * _dx + _dy * _dy);
+				var px = _dx / l;
+				var py = _dy / l;
+
+				var dot = px * dx + py * dy;
+				if (dot > hitThreshold) {
 					var l = Math.sqrt(_dx * _dx + _dy * _dy);
 					_dx /= l;
 					_dy /= l;
@@ -138,18 +157,21 @@ class ThrowLine extends Object {
 			}
 		}
 
-		var p = parent.globalToLocal(new Point(startX, startY));
-		//x = p.x;
-		//y = p.y;
-
 		var len = Math.sqrt(dx * dx + dy * dy);
 
 		var r = Math.min(maxRadius, len);
 		throwPower = aimTime.value;//r / maxRadius;
-		throwX = dx / len;
-		throwY = dy / len;
+		if (len == 0) {
+			throwX = state.guy.vx;
+			throwY = state.guy.vx;
+		} else {
+			throwX = dx / len;
+			throwY = dy / len;
+		}
 
-		arrowRotation = Math.atan2(dy, dx);
+		if (autoAim) {
+			arrowRotation = Math.atan2(dy, dx);
+		}
 
 		//r = Math.max(r, 16);
 		r = toThrowSize;

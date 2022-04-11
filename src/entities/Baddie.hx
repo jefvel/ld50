@@ -94,10 +94,11 @@ class Baddie extends Actor {
 
 	public var knockedOut = false;
 	var knockoutTime = 0.0;
+	var maxKnockoutTime = 7.0;
 	public function knockout() {
 		pickupable = true;
 		knockedOut = true;
-		knockoutTime = 5.0;
+		knockoutTime = maxKnockoutTime;
 		hurting = false;
 		eating = false;
 		if (life <= -2) {
@@ -294,6 +295,10 @@ class Baddie extends Actor {
 		}
 
 		needToEat -= dt;
+		if (knockedOut && held) {
+			knockoutTime = maxKnockoutTime;
+		}
+
 		if (knockedOut && !thrown && !held) {
 			knockoutTime -= dt;
 			if (knockoutTime <= 0) {

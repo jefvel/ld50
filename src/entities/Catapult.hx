@@ -54,8 +54,12 @@ class Catapult extends Actor {
 
 	public var toCatapult: Array<Actor> = [];
 	public function putIntoCatapult(a: Actor) {
-		if (a.held || a.thrown) return false;
+		if (a.held) return false;
 		if (!a.catapultable) return false;
+		a.thrown = false;
+		a.vy *= 0.6;
+		a.vx *= 0.6;
+		a.vz *= 0.6;
 		a.uncollidable = true;
 		a.held = true;
 		a.heldBy = this;
@@ -141,7 +145,7 @@ class Catapult extends Actor {
 				if (a == this) continue;
 				if (a.heldBy == this) continue;
 				if (!a.held) {
-					if (Math.abs(a.z) > 1 && a.type == Fruit) continue;
+					if (Math.abs(a.z) > 14 && a.type == Fruit) continue;
 				}
 
 				if (a.type == Baddie) {
@@ -162,7 +166,6 @@ class Catapult extends Actor {
 						a.heldBy = null;
 					}
 
-					
 					if (putIntoCatapult(a)) {
 						loadedIntoCatapult = true;
 						if (a.type == Baddie) bigLoad = true;

@@ -378,6 +378,7 @@ class Game extends hxd.App {
 				continue;
 			}
 
+			states.tick(tickTime * timeScale);
 
 			// States are still updated, to make sure pause menus and such work
 			if (paused) {
@@ -386,7 +387,6 @@ class Game extends hxd.App {
 
 			time += tickTime;
 
-			states.tick(tickTime * timeScale);
 
 			for (p in processes) {
 				p.update(tickTime * timeScale);

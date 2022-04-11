@@ -14,7 +14,11 @@ class Guy extends Actor {
 
 	public var pickupRadius = 20.;
 
+	public var fruitCount = 0;
+	public var enemyCount = 0;
+
 	public var maxFruit = 4;
+	public var maxBaddies = 1;
 
 	public var heldFruit: Array<Actor> = [];
 
@@ -35,6 +39,10 @@ class Guy extends Actor {
 			var tile = s.atlas.addNamedTile(sprite.tileSheet.tile, tName);
 			sprite.tileSheet.tile = tile;
 		}
+
+		aimArrow = new Bitmap(hxd.Res.img.arrow.toTile(), state.foreground);
+		aimArrow.alpha = 0.4;
+		aimArrow.tile.dy = -4;
 
 		throwLine = new ThrowLine(state.foreground, state);
 		type = Man;
@@ -64,8 +72,16 @@ class Guy extends Actor {
 	}
 
 	public function pickupFruit(fruit: Actor) {
-		if (heldFruit.length >= maxFruit) {
-			return;
+		if (fruit.type == Fruit) {
+			if (fruitCount >= maxFruit) {
+				return;
+			}
+		}
+		
+		if (fruit.type == Baddie) {
+			if (enemyCount >= maxBaddies) {
+				return;
+			}
 		}
 
 		if (fruit.held || fruit.thrown) {
@@ -75,6 +91,10 @@ class Guy extends Actor {
 		fruit.held = true;
 		fruit.heldBy = this;
 		heldFruit.push(fruit);
+
+		if (fruit.type == Fruit) fruitCount ++;
+		if (fruit.type == Baddie) enemyCount ++;
+
 		fruit.onPickup();
 		state.game.sound.playWobble(hxd.Res.sound.pickup, 0.3);
 	}
@@ -138,6 +158,9 @@ class Guy extends Actor {
 		toThrow.thrown = true;
 
 		heldFruit.remove(toThrow);
+		if (toThrow.type == Fruit) fruitCount --;
+		if (toThrow.type == Baddie) enemyCount --;
+
 		toThrow.vz = -4;
 
 		toThrow.onThrown();
@@ -165,6 +188,8 @@ class Guy extends Actor {
 	public var lookX = 0.;
 	public var lookY = 0.;
 
+	var aimArrow: Bitmap;
+
 	override function tick(dt:Float) {
 		super.tick(dt);
 		sprite.update(dt);
@@ -174,27 +199,46 @@ class Guy extends Actor {
 
 		var spaceY = 0.;
 
+		var autoAim = false;
+
 		//if (!aiming) {
-		var rx = state.game.gamepads.getRightStickX();
-		var ry = state.game.gamepads.getRightStickY();
-		if (rx * rx + ry * ry > 0.6 * 0.6) {
-			timeSinceAim = 0.;
-			lookX = rx;
-			lookY = ry;
-		} else {
-			timeSinceAim += dt;
+		if (state.game.inputMethod == Gamepad) {
+			autoAim = true;
+			var rx = state.game.gamepads.getRightStickX();
+			var ry = state.game.gamepads.getRightStickY();
+			if (rx * rx + ry * ry > 0.6 * 0.6) {
+				timeSinceAim = 0.;
+				lookX = rx;
+				lookY = ry;
+			} else {
+				timeSinceAim += dt;
+			}
+
+			if (timeSinceAim > 0.5) {
+				lookX = vx;
+				lookY = vy;
+			}
 		}
 
-		if (timeSinceAim > 0.5) {
-			lookX = vx;
-			lookY = vy;
+		if (state.game.inputMethod == Touch) {
+			autoAim = true;
+			var rx = vx;
+			var ry = vy;
+			if (rx * rx + ry * ry > 0.2 * 0.2) {
+				lookX = rx;
+				lookY = ry;
+			}
 		}
+
+		aimArrow.visible = autoAim && !aiming;
 
 		moveSpeedMultiplier = (aiming || throwing) ? 0.2 : 1;
 
 		for (f in heldFruit) {
 			if (f.heldBy != this) {
 				heldFruit.remove(f);
+				if (f.type == Fruit) fruitCount --;
+				if (f.type == Baddie) enemyCount --;
 			}
 
 			var p = f == toThrow ? rightArm : leftArm;
@@ -254,6 +298,11 @@ class Guy extends Actor {
 
 		var r = 0.;
 		if (shaking) r = Math.sin(state.time * 120) * 0.05;
+
+		var aimRot = Math.atan2(lookY, lookX);
+		aimArrow.x = x + Math.cos(aimRot) * 40;
+		aimArrow.y = y + Math.sin(aimRot) * 40;
+		aimArrow.rotation = aimRot;
 
 		state.actorGroup.addTransform(bx, by, sx, 1, r, t);
 	}

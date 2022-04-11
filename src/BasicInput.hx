@@ -111,6 +111,12 @@ class BasicInput extends Object {
 		return Key.isDown(Key.SPACE) || Key.isDown(Key.ENTER) || confirmPress;
 	}
 
+	public function startPressed() {
+		var pads = game.gamepads;
+		var confirmPress = pads.isBtnDown(BTNS.start);
+		return confirmPress;
+	}
+
 	public function update() {
 		var dx = 0.;
 		var dy = 0.;

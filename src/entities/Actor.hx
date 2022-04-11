@@ -85,7 +85,7 @@ class Actor extends WorldObject {
 		if(!held) {
 			vz += gravity;
 			z += vz;
-			if (z > 0) {
+			if (z > 0 && !held) {
 				hitFloor = true;
 				z = 0;
 				vz *= -bounciness;

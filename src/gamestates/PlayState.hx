@@ -1,5 +1,6 @@
 package gamestates;
 
+import entities.HeldItems;
 import elke.things.Newgrounds;
 import hxd.Window;
 import h2d.col.Point;
@@ -49,12 +50,14 @@ class PlayState extends elke.gamestate.GameState {
 
 	var hpBarBgTile: Tile;
 	var hpBarTile: Tile;
+	public var overlayTile: Tile;
 	var warningLeftTile: Tile;
 	var warningRightTile: Tile;
 	var warningUpTile: Tile;
 	var warningDownTile: Tile;
+	var carriedUi: HeldItems;
 	public var hpBarsGroup: TileGroup;
-	var warningsGroup: TileGroup;
+	public var uiOverlayGroup: TileGroup;
 
 	public var actors: Array<Actor> = [];
 	public var objects: Array<WorldObject> = [];
@@ -127,6 +130,7 @@ class PlayState extends elke.gamestate.GameState {
 		foreground = new Object(world);
 
 		var overlay = hxd.Res.img.overlayelements.toTile();
+		overlayTile = overlay;
 		hpBarTile = overlay.sub(0, 0, 1, 1);
 		hpBarBgTile = overlay.sub(0, 2, 1, 1);
 
@@ -160,7 +164,9 @@ class PlayState extends elke.gamestate.GameState {
 
 		startGame();
 
-		warningsGroup = new TileGroup(overlay, uiContainer);
+		uiOverlayGroup = new TileGroup(overlay, uiContainer);
+
+		carriedUi = new HeldItems(this);
 
 		musicChannel = game.sound.playMusic(hxd.Res.sound.playmusic, musicVol);
 		musicChannel.pause = true;
@@ -186,7 +192,7 @@ class PlayState extends elke.gamestate.GameState {
 
 		lost = true;
 
-		warningsGroup.visible = false;
+		uiOverlayGroup.visible = false;
 		hpBarsGroup.visible = false;
 
 		var d = GameSaveData.getCurrent();
@@ -338,15 +344,15 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		if (wave > 10) {
+			baddieSpawnInterval = 16;
+		}
+
+		if (wave > 16) {
 			baddieSpawnInterval = 15;
 		}
 
-		if (wave > 11) {
-			baddieSpawnInterval = 15;
-		}
-
-		if (wave > 19) {
-			if (wave % 2 == 1) {
+		if (wave > 18) {
+			if (wave % 3 != 1) {
 				spawnCount ++;
 			}
 		}
@@ -401,7 +407,50 @@ class PlayState extends elke.gamestate.GameState {
 		}, 0.2, 0.3);
 	}
 
+	var toggledPause = false;
+	function pauseToggle() {
+		if (lost) return;
+		if (!game.paused) {
+			toggledPause = true;
+			wasPaused = paused;
+			paused = true;
+			game.paused = true;
+			if (musicChannel != null) {
+				musicChannel.pause = true;
+			}
+		} else {
+			toggledPause = false;
+			paused = wasPaused;
+			game.paused = false;
+			if (musicChannel != null) {
+				musicChannel.pause = false;
+			}
+		}
+	}
+
+	var wasPaused = false;
+	var pausePressed = false;
 	override function onEvent(e:Event) {
+		if (e.kind == EFocusLost) {
+			if (lost) return;
+			if (toggledPause) return;
+			wasPaused = paused;
+			paused = true;
+			game.paused = true;
+			if (musicChannel != null) {
+				musicChannel.pause = true;
+			}
+		}
+		if (e.kind == EFocus) {
+			if (lost) return;
+			if (toggledPause) return;
+			paused = wasPaused;
+			game.paused = false;
+			if (musicChannel != null) {
+				musicChannel.pause = false;
+			}
+		}
+
 		if (!guy.dead && !upgrades.shown) {
 			if (e.kind == EPush && e.button == Key.MOUSE_LEFT) {
 				if (game.inputMethod == Touch) {
@@ -414,7 +463,7 @@ class PlayState extends elke.gamestate.GameState {
 
 			if ((e.kind == ERelease || e.kind == EReleaseOutside) && e.button == Key.MOUSE_LEFT) {
 				#if js
-				if (input.joystick.touchId == e.touchId) {
+				if (input.joystick.touchId == e.touchId && e.touchId != null) {
 					return;
 				}
 				#end
@@ -424,6 +473,15 @@ class PlayState extends elke.gamestate.GameState {
 					tutorial.threwThing = true;
 				}
 			}
+		}
+
+		if (e.kind == EKeyDown && e.keyCode == Key.ESCAPE && !pausePressed) {
+			pauseToggle();
+			pausePressed = true;
+		}
+
+		if (e.kind == EKeyUp && e.keyCode == Key.ESCAPE) {
+			pausePressed = false;
 		}
 
 		if (e.kind == EKeyDown && e.keyCode == Key.R) {
@@ -465,6 +523,7 @@ class PlayState extends elke.gamestate.GameState {
 
 		if (u.ID == Capacity) {
 			guy.maxFruit += 2;
+			guy.maxBaddies ++;
 		}
 
 		if (u.ID == Farmer) {
@@ -477,12 +536,21 @@ class PlayState extends elke.gamestate.GameState {
 		}
 
 		if (u.ID == Resurrect) {
-			var t = actors.filter(t -> t.type == Tree && t.dead);
-			for (_ in 0...2) {
-				var tree: Tree = cast t.randomElement();
-				if (tree == null) break;
-				t.remove(tree);
-				tree.revive();
+			var livingTrees = 0;
+			var t: Array<Tree> = cast actors.filter(t -> t.type == Tree);
+			for (tree in t) {
+				if (tree.dead) {
+					tree.revive();
+				} else {
+					livingTrees ++;
+					tree.life = tree.maxLife;
+				}
+			}
+
+			if (livingTrees > 0) {
+				var points = livingTrees * 250;
+				cam.addStatus('+${points} x${livingTrees} alive tree bonus');
+				addScore(points);
 			}
 		}
 
@@ -609,7 +677,7 @@ class PlayState extends elke.gamestate.GameState {
 		p.x = Math.max(0, Math.min(game.s2d.width, p.x));
 		p.y = Math.max(32, Math.min(game.s2d.height - 40, p.y));
 
-		warningsGroup.add(p.x, p.y, t);
+		uiOverlayGroup.add(p.x, p.y, t);
 	}
 
 	var triggerDown = false;
@@ -617,6 +685,15 @@ class PlayState extends elke.gamestate.GameState {
 	var pauseFrame = false;
 	var confirmWasPressed = false;
 	override function tick(dt:Float) {
+		if (!pausePressed) {
+			if (input.startPressed()) {
+				pauseToggle();
+				pausePressed = true;
+			}
+		} else if (!input.startPressed()) {
+			pausePressed = false;
+		}
+
 		if (!paused) {
 			if (pauseFrame) {
 				pauseFrame = false;
@@ -653,11 +730,13 @@ class PlayState extends elke.gamestate.GameState {
 					triggerDown = true;
 					startAim();
 				}
-			} else {
-				if (!input.triggerPressed() && !input.confirmPressed()) {
-					finishAim();
-					triggerDown = false;
-				}
+			}
+		}
+
+		if(triggerDown) {
+			if (!input.triggerPressed() && !input.confirmPressed()) {
+				finishAim();
+				triggerDown = false;
 			}
 		}
 
@@ -733,16 +812,19 @@ class PlayState extends elke.gamestate.GameState {
 			var r = guy.pickupRadius + f.radius;
 			var rSq = r * r;
 
-			if (Math.abs(f.z) < 2) {
+			if (Math.abs(f.z) < 9) {
 				var dx = guy.x - f.x;
 				var dy = guy.y - f.y;
 				if (dx * dx + dy * dy < rSq) {
 					guy.pickupFruit(f);
-					if (!heldFruitAchievementGot) {
-						if (!f.hitFloor) {
+					if (!f.hitFloor) {
+						if (!heldFruitAchievementGot) {
 							Newgrounds.instance.unlockMedal(68427);
 							heldFruitAchievementGot = true;
 						}
+
+						addScore(50);
+						cam.addStatus('+50 Air Catch');
 					}
 				}
 			}
@@ -842,6 +924,9 @@ class PlayState extends elke.gamestate.GameState {
 			container.filter = null;
 		}
 		container.alpha = upgradeAlphaFade.value;
+		if (game.paused) {
+			container.alpha = 0.6;
+		}
 
 		if (whiteFlash != null) {
 			whiteFlash.scaleX = game.s2d.width;
@@ -856,12 +941,16 @@ class PlayState extends elke.gamestate.GameState {
 			shadowGroup.addAlpha(Math.round(a.x), Math.round(a.y), alpha, shadow);
 		}
 
-		warningsGroup.clear();
+		uiOverlayGroup.clear();
 		hpBarsGroup.clear();
 		actorGroup.clear();
 		for (a in objects) {
 			a.draw();
 		}
+
+		carriedUi.x = 7;
+		carriedUi.y = 104;
+		carriedUi.draw();
 
 		positionWorld();
 	}
