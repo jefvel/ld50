@@ -175,7 +175,7 @@ class VolcanoCam extends Entity2D {
 
 		var scoreTextContainer = new Object(scoreInfo);
 		//scoreTextContainer.filter = new h2d.filter.Glow(0x150a1f, 1, 2, 1, 1, true);
-		scoreTextContainer.y = barY + scoreBar.height + 2;
+		scoreTextContainer.y = barY + scoreBar.height + 4;
 		statusFeed = new StatusFeed<Text>(scoreTextContainer);
 
 		for (i in 0...maxScoreTexts) {

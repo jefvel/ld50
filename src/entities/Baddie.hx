@@ -10,6 +10,7 @@ class Baddie extends Actor {
 	public var pickupRadius = 20.;
 
 	var maxLife = 3.;
+	var minLife = -2.;
 
 	public var target: Actor = null;
 	var color = new Vector(1, 1, 1);
@@ -57,7 +58,12 @@ class Baddie extends Actor {
 			return;
 		}
 
-		life -= damage;
+		if (!knockedOut) {
+			life -= damage;
+		} else {
+			life -= damage * 1.7;
+		}
+
 		hurting = true;
 
 		if (target != null && target.heldBy == this) {
@@ -93,15 +99,13 @@ class Baddie extends Actor {
 	}
 
 	public var knockedOut = false;
-	var knockoutTime = 0.0;
 	var maxKnockoutTime = 7.0;
 	public function knockout() {
 		pickupable = true;
 		knockedOut = true;
-		knockoutTime = maxKnockoutTime;
 		hurting = false;
 		eating = false;
-		if (life <= -2) {
+		if (life <= minLife) {
 			kill();
 		}
 	}
@@ -296,12 +300,12 @@ class Baddie extends Actor {
 
 		needToEat -= dt;
 		if (knockedOut && held) {
-			knockoutTime = maxKnockoutTime;
+			life = 0.;
 		}
 
 		if (knockedOut && !thrown && !held) {
-			knockoutTime -= dt;
-			if (knockoutTime <= 0) {
+			life += dt * (maxLife / maxKnockoutTime);
+			if (life >= maxLife) {
 				resetKnockout();
 			}
 		}
@@ -418,7 +422,11 @@ class Baddie extends Actor {
 		state.actorGroup.addTransform(bx, by, sx, 1, 0, color, t);
 
 		if (life < maxLife && !dead && heldBy == null) {
-			state.renderHpBar(x - 2, y - 64, life, maxLife);
+			if (knockedOut) {
+				state.renderHpBar(x - 2, y - 64, life - minLife, maxLife - minLife, true);
+			} else {
+				state.renderHpBar(x - 2, y - 64, life, maxLife);
+			}
 		}
 
 		state.renderWarning(x, y - 32);

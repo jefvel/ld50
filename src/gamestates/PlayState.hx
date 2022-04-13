@@ -50,6 +50,9 @@ class PlayState extends elke.gamestate.GameState {
 
 	var hpBarBgTile: Tile;
 	var hpBarTile: Tile;
+	var stunBartile:Tile;
+	var stunDarkTile:Tile;
+	var skullTile: Tile;
 	public var overlayTile: Tile;
 	var warningLeftTile: Tile;
 	var warningRightTile: Tile;
@@ -133,6 +136,10 @@ class PlayState extends elke.gamestate.GameState {
 		overlayTile = overlay;
 		hpBarTile = overlay.sub(0, 0, 1, 1);
 		hpBarBgTile = overlay.sub(0, 2, 1, 1);
+
+		stunBartile = overlay.sub(2, 0, 1, 1);
+		stunDarkTile = overlay.sub(2, 2, 1, 1);
+		skullTile = overlay.sub(16,0, 7, 6, -4, -3);
 
 		warningLeftTile = overlay.sub(0, 16, 16, 16);
 		warningLeftTile.dx = 4;
@@ -642,7 +649,7 @@ class PlayState extends elke.gamestate.GameState {
 
 	var alphaFadeout = 0.8;
 
-	public function renderHpBar(x: Float, y: Float, life: Float, maxLife: Float) {
+	public function renderHpBar(x: Float, y: Float, life: Float, maxLife: Float, stunBar = false) {
 		var hpBarWidth = 64;
 		var hpBarHeight = 4;
 		var sx = Math.round(x + -hpBarWidth * 0.5);
@@ -651,7 +658,14 @@ class PlayState extends elke.gamestate.GameState {
 		//sy += Std.int(world.y);
 		hpBarsGroup.addTransform(sx, sy, hpBarWidth, hpBarHeight, 0, hpBarBgTile);
 		var l = Math.min(Math.max(0, life) / maxLife, 1.);
-		hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, hpBarTile);
+		var stunL = Math.min(2 / 5, l);
+		if(!stunBar) {
+			hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, hpBarTile);
+		} else {
+			hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * l), hpBarHeight, 0, stunBartile);
+			hpBarsGroup.addTransform(sx, sy, Math.round(hpBarWidth * stunL), hpBarHeight, 0, stunDarkTile);
+			hpBarsGroup.addTransform(sx - 5, sy + 2,1, 1, 0, skullTile);
+		}
 	}
 
 	public function renderWarning(x: Float, y: Float) {
